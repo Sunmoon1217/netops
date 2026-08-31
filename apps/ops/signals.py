@@ -19,9 +19,16 @@ def on_device_config_saved(sender, instance, created, **kwargs):
     _processing.add(instance.pk)
     try:
         device = instance.device
-        raw_text = instance.config_json
+        hostname = device.hostname
+        commit_hash = instance.git_commit_hash
+
+        # 从 Git 仓库读取配置原文
+        from ops.config_repo import get_config
+
+        raw_text = get_config(hostname, commit_hash)
         if not raw_text:
-            logger.info("DeviceConfig %s config_json 为空，跳过解析", instance.pk)
+            logger.warning("DeviceConfig %s: Git 仓库中无配置 (hostname=%s, hash=%s)",
+                           instance.pk, hostname, commit_hash[:8] if commit_hash else "None")
             return
 
         # 获取解析器并执行解析
@@ -30,18 +37,15 @@ def on_device_config_saved(sender, instance, created, **kwargs):
         try:
             parser = ParserFactory.get_parser(device)
         except ValueError as e:
-            logger.warning("设备 %s 无匹配解析器: %s", device.hostname, e)
+            logger.warning("设备 %s 无匹配解析器: %s", hostname, e)
             return
-
-        if isinstance(raw_text, dict):
-            raw_text = str(raw_text)
 
         result = parser.parse(raw_text)
 
         # 更新 DeviceConfig 的解析结果
         instance.config_json = result
         instance.save(update_fields=["config_json", "updated_at"])
-        logger.info("设备 %s 配置解析完成", device.hostname)
+        logger.info("设备 %s 配置解析完成 (hash=%s)", hostname, commit_hash[:8] if commit_hash else "None")
     except Exception as e:
         logger.error("DeviceConfig %s 解析失败: %s", instance.pk, e, exc_info=True)
     finally:
