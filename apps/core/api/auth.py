@@ -19,7 +19,7 @@ def login(request):
     return Response(
         {
             "token": token.key,
-            "user": {"id": user.pk, "username": getattr(user, "username")},
+            "user": {"id": user.pk, "username": user.username},
         }
     )
 
