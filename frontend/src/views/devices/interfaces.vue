@@ -79,7 +79,7 @@ const handleSave = async () => {
 
 const modeTag = (mode: string) => {
   const map: Record<string, string> = { layer3: 'primary', access: 'success', hybrid: 'warning', trunk: '' }
-  return map[mode] || 'info'
+  return (map[mode] || 'info') as any
 }
 
 onMounted(() => {

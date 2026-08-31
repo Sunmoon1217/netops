@@ -1,3 +1,10 @@
+"""DeviceConfig post_save 信号处理
+
+流程:
+1. DeviceConfig 保存后触发
+2. 从 Git 读取配置原文 → 解析器解析 → 结果写回 config_json
+3. 如果 config_json 已有数据，从不同 key 分发到对应的 Saver 保存到数据库
+"""
 import logging
 
 from django.db.models.signals import post_save
@@ -10,10 +17,7 @@ _processing = set()
 
 @receiver(post_save, sender="assets.DeviceConfig")
 def on_device_config_saved(sender, instance, created, **kwargs):
-    """DeviceConfig 保存后触发配置解析"""
-    if not created:
-        return
-    if instance.pk in _processing:
+    if not created or instance.pk in _processing:
         return
 
     _processing.add(instance.pk)
@@ -22,31 +26,46 @@ def on_device_config_saved(sender, instance, created, **kwargs):
         hostname = device.hostname
         commit_hash = instance.git_commit_hash
 
-        # 从 Git 仓库读取配置原文
-        from ops.config_repo import get_config
+        # 1. 如果 config_json 为空，从 Git 读取并解析
+        config_json = instance.config_json
+        if not config_json or config_json == {}:
+            from ops.config_repo import get_config
 
-        raw_text = get_config(hostname, commit_hash)
-        if not raw_text:
-            logger.warning("DeviceConfig %s: Git 仓库中无配置 (hostname=%s, hash=%s)",
-                           instance.pk, hostname, commit_hash[:8] if commit_hash else "None")
-            return
+            raw_text = get_config(hostname, commit_hash)
+            if not raw_text:
+                logger.warning("DeviceConfig %s: Git 无配置 (hash=%s)", instance.pk,
+                               commit_hash[:8] if commit_hash else "None")
+                return
 
-        # 获取解析器并执行解析
-        from ops.parsers.factory import ParserFactory
+            from ops.parsers.factory import ParserFactory
 
-        try:
-            parser = ParserFactory.get_parser(device)
-        except ValueError as e:
-            logger.warning("设备 %s 无匹配解析器: %s", hostname, e)
-            return
+            try:
+                parser = ParserFactory.get_parser(device)
+            except ValueError as e:
+                logger.warning("设备 %s 无匹配解析器: %s", hostname, e)
+                return
 
-        result = parser.parse(raw_text)
+            config_json = parser.parse(raw_text)
+            instance.config_json = config_json
+            instance.save(update_fields=["config_json", "updated_at"])
+            logger.info("设备 %s 配置解析完成", hostname)
 
-        # 更新 DeviceConfig 的解析结果
-        instance.config_json = result
-        instance.save(update_fields=["config_json", "updated_at"])
-        logger.info("设备 %s 配置解析完成 (hash=%s)", hostname, commit_hash[:8] if commit_hash else "None")
+        # 2. config_json 有数据 → 分发到 Saver
+        if config_json and config_json != {}:
+            from ops.savers.registry import get_savers_for_config
+
+            savers = get_savers_for_config(device.device_type, config_json)
+            for key, saver in savers:
+                try:
+                    data = config_json.get(key)
+                    if data:
+                        created_n, updated_n = saver.save(device, {key: data})
+                        logger.info("设备 %s [%s] 保存完成: +%d ~%d",
+                                    hostname, key, created_n, updated_n)
+                except Exception as e:
+                    logger.error("设备 %s [%s] 保存失败: %s", hostname, key, e, exc_info=True)
+
     except Exception as e:
-        logger.error("DeviceConfig %s 解析失败: %s", instance.pk, e, exc_info=True)
+        logger.error("DeviceConfig %s 处理失败: %s", instance.pk, e, exc_info=True)
     finally:
         _processing.discard(instance.pk)

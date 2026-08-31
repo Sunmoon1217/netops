@@ -573,3 +573,251 @@ def _import_configs(ws):
         created += 1
 
     return {"created": created, "skipped": skipped, "errors": errors}
+
+
+# ---------------------------------------------------------------------------
+# SLB (LTM) ViewSets
+# ---------------------------------------------------------------------------
+
+class LtmVirtualServerViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmVirtualServer
+
+    from .serializers import LtmVirtualServerSerializer
+    queryset = LtmVirtualServer.objects.select_related("device").all()
+    serializer_class = LtmVirtualServerSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+    ordering_fields = ("name", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class LtmPoolViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmPool
+
+    from .serializers import LtmPoolSerializer
+    queryset = LtmPool.objects.select_related("device").all()
+    serializer_class = LtmPoolSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+    ordering_fields = ("name", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class LtmPoolMemberViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmPoolMember
+
+    from .serializers import LtmPoolMemberSerializer
+    queryset = LtmPoolMember.objects.all()
+    serializer_class = LtmPoolMemberSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "pool_name")
+
+
+class LtmProfileViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmProfile
+
+    from .serializers import LtmProfileSerializer
+    queryset = LtmProfile.objects.select_related("device").all()
+    serializer_class = LtmProfileSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class LtmIRuleViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmIRule
+
+    from .serializers import LtmIRuleSerializer
+    queryset = LtmIRule.objects.select_related("device").all()
+    serializer_class = LtmIRuleSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class LtmSNATViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmSNAT
+
+    from .serializers import LtmSNATSerializer
+    queryset = LtmSNAT.objects.select_related("device").all()
+    serializer_class = LtmSNATSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class LtmPersistViewSet(viewsets.ModelViewSet):
+    from assets.models import LtmPersist
+
+    from .serializers import LtmPersistSerializer
+    queryset = LtmPersist.objects.select_related("device").all()
+    serializer_class = LtmPersistSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+# ---------------------------------------------------------------------------
+# GSLB (GTM) ViewSets
+# ---------------------------------------------------------------------------
+
+class GtmDatacenterViewSet(viewsets.ModelViewSet):
+    from assets.models import GtmDatacenter
+
+    from .serializers import GtmDatacenterSerializer
+    queryset = GtmDatacenter.objects.select_related("device").all()
+    serializer_class = GtmDatacenterSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class GtmWideipViewSet(viewsets.ModelViewSet):
+    from assets.models import GtmWideip
+
+    from .serializers import GtmWideipSerializer
+    queryset = GtmWideip.objects.select_related("device").all()
+    serializer_class = GtmWideipSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+    ordering_fields = ("name", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class GtmPoolViewSet(viewsets.ModelViewSet):
+    from assets.models import GtmPool
+
+    from .serializers import GtmPoolSerializer
+    queryset = GtmPool.objects.select_related("device").all()
+    serializer_class = GtmPoolSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+# ---------------------------------------------------------------------------
+# Firewall Policy ViewSets
+# ---------------------------------------------------------------------------
+
+class AddressBookViewSet(viewsets.ModelViewSet):
+    from assets.models import AddressBook
+
+    from .serializers import AddressBookSerializer
+    queryset = AddressBook.objects.select_related("device", "parent").all()
+    serializer_class = AddressBookSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class ServiceViewSet(viewsets.ModelViewSet):
+    from assets.models import Service
+
+    from .serializers import ServiceSerializer
+    queryset = Service.objects.select_related("device").all()
+    serializer_class = ServiceSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "protocol")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class PolicyViewSet(viewsets.ModelViewSet):
+    from assets.models import Policy
+
+    from .serializers import PolicySerializer
+    queryset = Policy.objects.select_related("device").all()
+    serializer_class = PolicySerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "policy_id", "device__hostname")
+    ordering_fields = ("order", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class NatRuleViewSet(viewsets.ModelViewSet):
+    from assets.models import NatRule
+
+    from .serializers import NatRuleSerializer
+    queryset = NatRule.objects.select_related("device").all()
+    serializer_class = NatRuleSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+    ordering_fields = ("order", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs

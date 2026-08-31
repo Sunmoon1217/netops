@@ -29,6 +29,17 @@ const router = createRouter({
         { path: 'parsers', name: 'device-parsers', component: () => import('@/views/devices/parsers.vue') },
       ],
     },
+    {
+      path: '/config',
+      component: () => import('@/views/devices/index.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/config/slb' },
+        { path: 'slb', name: 'config-slb', component: () => import('@/views/config/slb.vue') },
+        { path: 'gslb', name: 'config-gslb', component: () => import('@/views/config/gslb.vue') },
+        { path: 'firewall', name: 'config-firewall', component: () => import('@/views/config/firewall.vue') },
+      ],
+    },
   ],
 })
 
