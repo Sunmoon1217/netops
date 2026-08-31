@@ -76,3 +76,9 @@ network_ops-archive-*
 .mimocode/
 AGENTS.md
 docs/
+
+# Database init scripts (keep in repo)
+
+# Auto-generated types
+src/auto-imports.d.ts
+src/components.d.ts

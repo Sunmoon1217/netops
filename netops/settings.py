@@ -1,3 +1,11 @@
+from pathlib import Path
+import os
+import sys
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+APPS_DIR = BASE_DIR / "apps"
+if str(APPS_DIR) not in sys.path:
+    sys.path.insert(0, str(APPS_DIR))
 """
 Django settings for netops project.
 
@@ -12,8 +20,6 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -37,6 +43,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'django_filters',
+    'django_extensions',
+    'assets',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +84,12 @@ WSGI_APPLICATION = 'netops.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('POSTGRES_DB', 'netops'),
+        'USER': os.environ.get('POSTGRES_USER', 'netops'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'netops_password'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'localhost'),
+        'PORT': int(os.environ.get('POSTGRES_PORT', '5432')),
     }
 }
 
@@ -114,7 +128,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+FRONTEND = BASE_DIR / 'frontend' / 'dist'
 
 
 # Email
