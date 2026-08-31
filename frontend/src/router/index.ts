@@ -30,6 +30,11 @@ const router = createRouter({
           name: 'device-config',
           component: () => import('@/views/devices/config.vue'),
         },
+        {
+          path: 'parsers',
+          name: 'device-parsers',
+          component: () => import('@/views/devices/parsers.vue'),
+        },
       ],
     },
   ],

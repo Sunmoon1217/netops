@@ -15,14 +15,13 @@ const handleLogout = async () => {
   <el-header class="navbar">
     <div class="navbar-left">
       <router-link to="/" class="navbar-brand">Network Ops</router-link>
-      <el-menu
-        mode="horizontal"
-        :ellipsis="false"
-        router
-        class="navbar-menu"
-      >
+      <el-menu mode="horizontal" :ellipsis="false" router class="navbar-menu" :default-active="$route.path">
         <el-menu-item index="/">首页</el-menu-item>
-        <el-menu-item index="/devices">设备管理</el-menu-item>
+        <el-sub-menu index="/devices">
+          <template #title>设备管理</template>
+          <el-menu-item index="/devices">设备列表</el-menu-item>
+          <el-menu-item index="/devices/parsers">解析器模板</el-menu-item>
+        </el-sub-menu>
       </el-menu>
     </div>
     <div class="navbar-right">
