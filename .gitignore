@@ -82,3 +82,4 @@ docs/
 # Auto-generated types
 src/auto-imports.d.ts
 src/components.d.ts
+.django-stub-gen/
