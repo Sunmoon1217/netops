@@ -1,4 +1,8 @@
 <script setup lang="ts">
+const tableRef = ref<HTMLElement | null>(null)
+const tableHeight = ref(600)
+const tableWidth = ref(1200)
+
 const datacenters = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
@@ -30,8 +34,21 @@ const handleDelete = (row: any) => {
   ElMessage.warning(`删除: ${row.name}`)
 }
 
+const updateSize = () => {
+  if (tableRef.value) {
+    tableHeight.value = tableRef.value.clientHeight
+    tableWidth.value = tableRef.value.clientWidth
+  }
+}
+
 onMounted(() => {
   fetchData()
+  nextTick(updateSize)
+  window.addEventListener('resize', updateSize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateSize)
 })
 </script>
 
@@ -45,39 +62,44 @@ onMounted(() => {
       </div>
     </div>
 
-    <el-table-v2
-      v-loading="loading"
-      :columns="[
-        { key: 'name', title: '名称', dataKey: 'name', width: 200 },
-        { key: 'address', title: '地址', dataKey: 'address', width: 250 },
-        { key: 'contact', title: '联系人', dataKey: 'contact', width: 120 },
-        { key: 'phone', title: '电话', dataKey: 'phone', width: 140 },
-        { key: 'room_count', title: '机房数', dataKey: 'room_count', width: 80 },
-        { key: 'cabinet_count', title: '机柜数', dataKey: 'cabinet_count', width: 80 },
-        { key: 'created_at', title: '创建时间', dataKey: 'created_at', width: 180 },
-      ]"
-      :data="filteredData"
-      :width="1200"
-      :height="600"
-      :fixed="true"
-    >
-      <template #header-cell="{ column }">
-        <span style="font-weight: 600">{{ column.title }}</span>
-      </template>
-      <template #cell="{ column, rowData }">
-        <template v-if="column.key === 'created_at'">
-          {{ new Date(rowData[column.dataKey!]).toLocaleDateString('zh-CN') }}
+    <div ref="tableRef" class="table-wrapper">
+      <el-table-v2
+        v-loading="loading"
+        :columns="[
+          { key: 'name', title: '名称', dataKey: 'name', width: 200 },
+          { key: 'address', title: '地址', dataKey: 'address', width: 250 },
+          { key: 'contact', title: '联系人', dataKey: 'contact', width: 120 },
+          { key: 'phone', title: '电话', dataKey: 'phone', width: 140 },
+          { key: 'room_count', title: '机房数', dataKey: 'room_count', width: 80 },
+          { key: 'cabinet_count', title: '机柜数', dataKey: 'cabinet_count', width: 80 },
+          { key: 'created_at', title: '创建时间', dataKey: 'created_at', width: 180 },
+        ]"
+        :data="filteredData"
+        :height="tableHeight"
+        :width="tableWidth"
+        :fixed="true"
+      >
+        <template #header-cell="{ column }">
+          <span style="font-weight: 600">{{ column.title }}</span>
         </template>
-        <template v-else>
-          {{ rowData[column.dataKey!] ?? '-' }}
+        <template #cell="{ column, rowData }">
+          <template v-if="column.key === 'created_at'">
+            {{ new Date(rowData[column.dataKey!]).toLocaleDateString('zh-CN') }}
+          </template>
+          <template v-else>
+            {{ rowData[column.dataKey!] ?? '-' }}
+          </template>
         </template>
-      </template>
-    </el-table-v2>
+      </el-table-v2>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .device-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 20px;
 }
 .list-header {
@@ -85,6 +107,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 .list-header h2 {
   margin: 0;
@@ -94,5 +117,9 @@ onMounted(() => {
 .list-actions {
   display: flex;
   gap: 8px;
+}
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
 }
 </style>
