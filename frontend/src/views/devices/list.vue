@@ -1,28 +1,33 @@
 <script setup lang="ts">
+import { h } from 'vue'
+import { useRouter } from 'vue-router'
+import { getDevices } from '@/api/devices'
+import { ElButton } from 'element-plus'
+
+const router = useRouter()
 const tableRef = ref<HTMLElement | null>(null)
 const tableHeight = ref(600)
 const tableWidth = ref(1200)
 
-const datacenters = ref<any[]>([])
+const devices = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
 
 const filteredData = computed(() => {
-  if (!search.value) return datacenters.value
+  if (!search.value) return devices.value
   const keyword = search.value.toLowerCase()
-  return datacenters.value.filter(
+  return devices.value.filter(
     (item: any) =>
-      item.name.toLowerCase().includes(keyword) ||
-      item.address.toLowerCase().includes(keyword)
+      item.hostname.toLowerCase().includes(keyword) ||
+      item.ip_address?.toLowerCase().includes(keyword)
   )
 })
 
 const fetchData = async () => {
   loading.value = true
   try {
-    const res = await fetch('/api/dcim/datacenters/')
-    const data = await res.json()
-    datacenters.value = data.results || data || []
+    const res = await getDevices()
+    devices.value = res.data.results || res.data || []
   } catch {
     ElMessage.error('加载失败')
   } finally {
@@ -30,8 +35,8 @@ const fetchData = async () => {
   }
 }
 
-const handleDelete = (row: any) => {
-  ElMessage.warning(`删除: ${row.name}`)
+const goToConfig = (row: any) => {
+  router.push(`/devices/${row.id}/config`)
 }
 
 const updateSize = () => {
@@ -66,13 +71,12 @@ onUnmounted(() => {
       <el-table-v2
         v-loading="loading"
         :columns="[
-          { key: 'name', title: '名称', dataKey: 'name', width: 200 },
-          { key: 'address', title: '地址', dataKey: 'address', width: 250 },
-          { key: 'contact', title: '联系人', dataKey: 'contact', width: 120 },
-          { key: 'phone', title: '电话', dataKey: 'phone', width: 140 },
-          { key: 'room_count', title: '机房数', dataKey: 'room_count', width: 80 },
-          { key: 'cabinet_count', title: '机柜数', dataKey: 'cabinet_count', width: 80 },
-          { key: 'created_at', title: '创建时间', dataKey: 'created_at', width: 180 },
+          { key: 'hostname', title: '主机名', dataKey: 'hostname', width: 200 },
+          { key: 'device_type', title: '类型', dataKey: 'device_type', width: 100 },
+          { key: 'ip_address', title: '管理IP', dataKey: 'ip_address', width: 140 },
+          { key: 'idc_name', title: '数据中心', dataKey: 'idc_name', width: 140 },
+          { key: 'remark', title: '备注', dataKey: 'remark', width: 200 },
+          { key: 'config', title: '操作', width: 100, fixed: true },
         ]"
         :data="filteredData"
         :height="tableHeight"
@@ -83,8 +87,10 @@ onUnmounted(() => {
           <span style="font-weight: 600">{{ column.title }}</span>
         </template>
         <template #cell="{ column, rowData }">
-          <template v-if="column.key === 'created_at'">
-            {{ new Date(rowData[column.dataKey!]).toLocaleDateString('zh-CN') }}
+          <template v-if="column.key === 'config'">
+            <el-button size="small" link type="primary" @click="goToConfig(rowData)">
+              配置
+            </el-button>
           </template>
           <template v-else>
             {{ rowData[column.dataKey!] ?? '-' }}

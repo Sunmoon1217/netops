@@ -25,6 +25,11 @@ const router = createRouter({
           name: 'device-list',
           component: () => import('@/views/devices/list.vue'),
         },
+        {
+          path: ':id/config',
+          name: 'device-config',
+          component: () => import('@/views/devices/config.vue'),
+        },
       ],
     },
   ],

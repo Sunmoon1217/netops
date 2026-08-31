@@ -69,3 +69,39 @@ class CabinetViewSet(viewsets.ModelViewSet):
         if status:
             qs = qs.filter(status=status)
         return qs
+
+
+class DeviceViewSet(viewsets.ModelViewSet):
+    from assets.models import Device
+    from .serializers import DeviceSerializer
+    queryset = Device.objects.select_related("idc").all()
+    serializer_class = DeviceSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("hostname", "ip_address")
+    ordering_fields = ("hostname", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_type = self.request.query_params.get("device_type")
+        if device_type:
+            qs = qs.filter(device_type=device_type)
+        idc = self.request.query_params.get("idc")
+        if idc:
+            qs = qs.filter(idc_id=idc)
+        return qs
+
+
+class DeviceConfigViewSet(viewsets.ModelViewSet):
+    from assets.models import DeviceConfig
+    from .serializers import DeviceConfigSerializer
+    queryset = DeviceConfig.objects.select_related("device").all()
+    serializer_class = DeviceConfigSerializer
+    permission_classes = (AllowAny,)
+    ordering_fields = ("collected_at",)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs

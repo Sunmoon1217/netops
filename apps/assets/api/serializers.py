@@ -44,3 +44,25 @@ class CabinetSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "row", "room", "room_name", "datacenter_name",
                   "total_u", "power_capacity", "status", "remark", "created_at")
         read_only_fields = ("id", "created_at")
+
+
+class DeviceSerializer(serializers.ModelSerializer):
+    idc_name = serializers.CharField(source="idc.name", read_only=True, default="")
+
+    class Meta:
+        from assets.models import Device
+        model = Device
+        fields = ("id", "hostname", "device_type", "ip_address", "idc", "idc_name",
+                  "remark", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class DeviceConfigSerializer(serializers.ModelSerializer):
+    device_name = serializers.CharField(source="device.hostname", read_only=True)
+
+    class Meta:
+        from assets.models import DeviceConfig
+        model = DeviceConfig
+        fields = ("id", "device", "device_name", "git_commit_hash", "config_json",
+                  "parse_duration", "collected_at")
+        read_only_fields = ("id", "collected_at")

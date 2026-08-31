@@ -8,6 +8,8 @@ router.register(r"security-zones", views.SecurityZoneViewSet, basename="security
 router.register(r"datacenters", views.DataCenterViewSet, basename="datacenter")
 router.register(r"rooms", views.RoomViewSet, basename="room")
 router.register(r"cabinets", views.CabinetViewSet, basename="cabinet")
+router.register(r"devices", views.DeviceViewSet, basename="device")
+router.register(r"device-configs", views.DeviceConfigViewSet, basename="device-config")
 
 urlpatterns = [
     path("dcim/", include(router.urls)),
