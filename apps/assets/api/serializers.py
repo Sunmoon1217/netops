@@ -189,3 +189,167 @@ class SyslogConfigSerializer(serializers.ModelSerializer):
         fields = ("id", "device", "device_hostname", "server1", "server2", "port",
                   "facility", "level", "enabled", "created_at")
         read_only_fields = ("id", "created_at")
+
+
+# ---------------------------------------------------------------------------
+# SLB (LTM) Serializers
+# ---------------------------------------------------------------------------
+
+class LtmVirtualServerSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmVirtualServer
+        model = LtmVirtualServer
+        fields = ("id", "device", "device_hostname", "name", "vs_address", "vs_port",
+                  "mask", "protocol", "pool", "snat_type", "persist", "profiles", "rules",
+                  "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class LtmPoolSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmPool
+        model = LtmPool
+        fields = ("id", "device", "device_hostname", "name", "mode", "monitors", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class LtmPoolMemberSerializer(serializers.ModelSerializer):
+    class Meta:
+        from assets.models import LtmPoolMember
+        model = LtmPoolMember
+        fields = ("id", "pool_name", "name", "address")
+        read_only_fields = ("id",)
+
+
+class LtmProfileSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmProfile
+        model = LtmProfile
+        fields = ("id", "device", "device_hostname", "name", "type", "raw", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class LtmIRuleSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmIRule
+        model = LtmIRule
+        fields = ("id", "device", "device_hostname", "name", "raw", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class LtmSNATSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmSNAT
+        model = LtmSNAT
+        fields = ("id", "device", "device_hostname", "name", "address", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class LtmPersistSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import LtmPersist
+        model = LtmPersist
+        fields = ("id", "device", "device_hostname", "name", "type", "raw", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+# ---------------------------------------------------------------------------
+# GSLB (GTM) Serializers
+# ---------------------------------------------------------------------------
+
+class GtmDatacenterSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import GtmDatacenter
+        model = GtmDatacenter
+        fields = ("id", "device", "device_hostname", "name", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class GtmWideipSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import GtmWideip
+        model = GtmWideip
+        fields = ("id", "device", "device_hostname", "name", "rtype", "lb_mode", "pools",
+                  "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class GtmPoolSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import GtmPool
+        model = GtmPool
+        fields = ("id", "device", "device_hostname", "name", "lb_mode", "alternate_mode",
+                  "fallback_mode", "fallback_ip", "ttl", "members", "monitor",
+                  "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+# ---------------------------------------------------------------------------
+# Firewall Policy Serializers
+# ---------------------------------------------------------------------------
+
+class AddressBookSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+    parent_name = serializers.CharField(source="parent.name", read_only=True, default="")
+
+    class Meta:
+        from assets.models import AddressBook
+        model = AddressBook
+        fields = ("id", "device", "device_hostname", "name", "address_type",
+                  "ip_address", "ip_netmask", "ip_start", "ip_end",
+                  "parent", "parent_name", "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import Service
+        model = Service
+        fields = ("id", "device", "device_hostname", "name", "protocol", "port", "port2",
+                  "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class PolicySerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import Policy
+        model = Policy
+        fields = ("id", "device", "device_hostname", "policy_id", "order", "name", "action",
+                  "enabled", "source_addresses", "destination_addresses", "services",
+                  "log", "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class NatRuleSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import NatRule
+        model = NatRule
+        fields = ("id", "device", "device_hostname", "order", "name", "nat_type", "enabled",
+                  "source_addresses", "destination_addresses", "services",
+                  "translated_source", "translated_destination", "translated_service",
+                  "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
