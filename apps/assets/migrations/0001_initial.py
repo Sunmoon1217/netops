@@ -5,88 +5,120 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='DataCenter',
+            name="DataCenter",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, unique=True, verbose_name='数据中心名称')),
-                ('address', models.CharField(blank=True, default='', max_length=255, verbose_name='地址')),
-                ('contact', models.CharField(blank=True, default='', max_length=100, verbose_name='联系人')),
-                ('phone', models.CharField(blank=True, default='', max_length=50, verbose_name='联系电话')),
-                ('remark', models.TextField(blank=True, default='', verbose_name='备注')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=100, unique=True, verbose_name="数据中心名称")),
+                ("address", models.CharField(blank=True, default="", max_length=255, verbose_name="地址")),
+                ("contact", models.CharField(blank=True, default="", max_length=100, verbose_name="联系人")),
+                ("phone", models.CharField(blank=True, default="", max_length=50, verbose_name="联系电话")),
+                ("remark", models.TextField(blank=True, default="", verbose_name="备注")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="创建时间")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="更新时间")),
             ],
             options={
-                'verbose_name': '数据中心',
-                'verbose_name_plural': '数据中心',
-                'db_table': 'dcim_datacenter',
-                'ordering': ('name',),
+                "verbose_name": "数据中心",
+                "verbose_name_plural": "数据中心",
+                "db_table": "dcim_datacenter",
+                "ordering": ("name",),
             },
         ),
         migrations.CreateModel(
-            name='SecurityZone',
+            name="SecurityZone",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, unique=True, verbose_name='安全区名称')),
-                ('color', models.CharField(default='#3b82f6', max_length=7, verbose_name='标识颜色')),
-                ('description', models.TextField(blank=True, default='', verbose_name='描述')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=50, unique=True, verbose_name="安全区名称")),
+                ("color", models.CharField(default="#3b82f6", max_length=7, verbose_name="标识颜色")),
+                ("description", models.TextField(blank=True, default="", verbose_name="描述")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="创建时间")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="更新时间")),
             ],
             options={
-                'verbose_name': '逻辑安全区',
-                'verbose_name_plural': '逻辑安全区',
-                'db_table': 'dcim_securityzone',
-                'ordering': ('name',),
+                "verbose_name": "逻辑安全区",
+                "verbose_name_plural": "逻辑安全区",
+                "db_table": "dcim_securityzone",
+                "ordering": ("name",),
             },
         ),
         migrations.CreateModel(
-            name='Room',
+            name="Room",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, verbose_name='机房名称')),
-                ('contact', models.CharField(blank=True, default='', max_length=100, verbose_name='联系人')),
-                ('remark', models.TextField(blank=True, default='', verbose_name='备注')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
-                ('datacenter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rooms', to='assets.datacenter', verbose_name='所属数据中心')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=100, verbose_name="机房名称")),
+                ("contact", models.CharField(blank=True, default="", max_length=100, verbose_name="联系人")),
+                ("remark", models.TextField(blank=True, default="", verbose_name="备注")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="创建时间")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="更新时间")),
+                (
+                    "datacenter",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="rooms",
+                        to="assets.datacenter",
+                        verbose_name="所属数据中心",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '机房',
-                'verbose_name_plural': '机房',
-                'db_table': 'dcim_room',
-                'ordering': ('datacenter', 'name'),
-                'unique_together': {('datacenter', 'name')},
+                "verbose_name": "机房",
+                "verbose_name_plural": "机房",
+                "db_table": "dcim_room",
+                "ordering": ("datacenter", "name"),
+                "unique_together": {("datacenter", "name")},
             },
         ),
         migrations.CreateModel(
-            name='Cabinet',
+            name="Cabinet",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, verbose_name='机柜编号')),
-                ('row', models.CharField(blank=True, default='', max_length=20, verbose_name='排')),
-                ('total_u', models.PositiveIntegerField(default=42, verbose_name='总U数')),
-                ('power_capacity', models.DecimalField(blank=True, decimal_places=2, max_digits=8, null=True, verbose_name='额定功率(kW)')),
-                ('status', models.CharField(choices=[('active', '使用中'), ('reserved', '预留'), ('maintenance', '维护中'), ('decommissioned', '已下架')], default='active', max_length=20, verbose_name='状态')),
-                ('remark', models.TextField(blank=True, default='', verbose_name='备注')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='创建时间')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='更新时间')),
-                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='cabinets', to='assets.room', verbose_name='所属机房')),
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=50, verbose_name="机柜编号")),
+                ("row", models.CharField(blank=True, default="", max_length=20, verbose_name="排")),
+                ("total_u", models.PositiveIntegerField(default=42, verbose_name="总U数")),
+                (
+                    "power_capacity",
+                    models.DecimalField(
+                        blank=True, decimal_places=2, max_digits=8, null=True, verbose_name="额定功率(kW)"
+                    ),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "使用中"),
+                            ("reserved", "预留"),
+                            ("maintenance", "维护中"),
+                            ("decommissioned", "已下架"),
+                        ],
+                        default="active",
+                        max_length=20,
+                        verbose_name="状态",
+                    ),
+                ),
+                ("remark", models.TextField(blank=True, default="", verbose_name="备注")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="创建时间")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="更新时间")),
+                (
+                    "room",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="cabinets",
+                        to="assets.room",
+                        verbose_name="所属机房",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': '机柜',
-                'verbose_name_plural': '机柜',
-                'db_table': 'dcim_cabinet',
-                'ordering': ('room', 'row', 'name'),
-                'unique_together': {('room', 'name')},
+                "verbose_name": "机柜",
+                "verbose_name_plural": "机柜",
+                "db_table": "dcim_cabinet",
+                "ordering": ("room", "row", "name"),
+                "unique_together": {("room", "name")},
             },
         ),
     ]

@@ -7,6 +7,7 @@ from django.db import models
 
 class User(AbstractUser):
     """扩展用户模型"""
+
     phone = models.CharField(max_length=20, blank=True, default="", verbose_name="手机号")
     avatar = models.CharField(max_length=255, blank=True, default="", verbose_name="头像URL")
 
@@ -20,6 +21,7 @@ class User(AbstractUser):
 
 class Token(models.Model):
     """API Token"""
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

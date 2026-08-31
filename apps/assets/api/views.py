@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from rest_framework import viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
 
 from assets.models import Cabinet, DataCenter, Room, SecurityZone
 
@@ -75,7 +75,9 @@ class CabinetViewSet(viewsets.ModelViewSet):
 
 class DeviceViewSet(viewsets.ModelViewSet):
     from assets.models import Device
+
     from .serializers import DeviceSerializer
+
     queryset = Device.objects.select_related("idc").all()
     serializer_class = DeviceSerializer
     permission_classes = (AllowAny,)
@@ -95,7 +97,9 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
 class DeviceConfigViewSet(viewsets.ModelViewSet):
     from assets.models import DeviceConfig
+
     from .serializers import DeviceConfigSerializer
+
     queryset = DeviceConfig.objects.select_related("device").all()
     serializer_class = DeviceConfigSerializer
     permission_classes = (AllowAny,)
@@ -124,7 +128,7 @@ def import_devices(request):
     except Exception as e:
         return Response({"error": f"文件格式错误: {e}"}, status=400)
 
-    from assets.models import Device, DataCenter
+    from assets.models import DataCenter, Device
 
     results = {"created": 0, "updated": 0, "errors": []}
 

@@ -70,9 +70,7 @@ class Cabinet(models.Model):
 
     name = models.CharField(max_length=50, verbose_name="机柜编号")
     row = models.CharField(max_length=20, blank=True, default="", verbose_name="排")
-    room = models.ForeignKey(
-        Room, on_delete=models.CASCADE, related_name="cabinets", verbose_name="所属机房"
-    )
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="cabinets", verbose_name="所属机房")
     total_u = models.PositiveIntegerField(default=42, verbose_name="总U数")
     power_capacity = models.DecimalField(
         max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="额定功率(kW)"
@@ -102,6 +100,7 @@ class Cabinet(models.Model):
 
 class Device(models.Model):
     """网络设备（简化版）"""
+
     DEVICE_TYPE_CHOICES = [
         ("firewall", "防火墙"),
         ("switch", "交换机"),
@@ -114,8 +113,12 @@ class Device(models.Model):
     device_type = models.CharField(max_length=50, choices=DEVICE_TYPE_CHOICES, verbose_name="设备类型")
     ip_address = models.CharField(max_length=50, blank=True, default="", verbose_name="管理IP")
     idc = models.ForeignKey(
-        "DataCenter", on_delete=models.SET_NULL, null=True, blank=True,
-        related_name="devices", verbose_name="数据中心",
+        "DataCenter",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="devices",
+        verbose_name="数据中心",
     )
     remark = models.TextField(blank=True, default="", verbose_name="备注")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
@@ -132,9 +135,8 @@ class Device(models.Model):
 
 class DeviceConfig(models.Model):
     """设备配置"""
-    device = models.ForeignKey(
-        Device, on_delete=models.CASCADE, related_name="configs", verbose_name="关联设备"
-    )
+
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="configs", verbose_name="关联设备")
     git_commit_hash = models.CharField(max_length=40, verbose_name="Git Commit Hash")
     config_json = models.JSONField(blank=True, null=True, verbose_name="解析后的配置数据")
     parse_duration = models.FloatField(null=True, blank=True, verbose_name="解析耗时(秒)")
