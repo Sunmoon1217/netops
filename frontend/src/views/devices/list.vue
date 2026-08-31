@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { h } from 'vue'
 import { useRouter } from 'vue-router'
-import { getDevices, importDevices } from '@/api/devices'
-import { ElButton, ElMessageBox, ElMessage } from 'element-plus'
+import { getDevices } from '@/api/devices'
+import { ElButton } from 'element-plus'
 import { FixedDir } from 'element-plus/es/components/table-v2/src/constants'
+import ImportDevice from './components/ImportDevice.vue'
 
 const router = useRouter()
 const tableRef = ref<HTMLElement | null>(null)
@@ -14,8 +15,6 @@ const devices = ref<any[]>([])
 const loading = ref(false)
 const search = ref('')
 const importDialogVisible = ref(false)
-const importFile = ref<File | null>(null)
-const importLoading = ref(false)
 
 const filteredData = computed(() => {
   if (!search.value) return devices.value
@@ -41,33 +40,6 @@ const fetchData = async () => {
 
 const goToConfig = (row: any) => {
   router.push(`/devices/${row.id}/config`)
-}
-
-const handleImport = async () => {
-  if (!importFile.value) {
-    ElMessage.warning('请选择文件')
-    return
-  }
-  importLoading.value = true
-  try {
-    const res = await importDevices(importFile.value)
-    const data = res.data
-    ElMessage.success(`导入完成: 新增 ${data.created}, 更新 ${data.updated}`)
-    if (data.errors?.length) {
-      ElMessage.warning(`${data.errors.length} 条导入失败`)
-    }
-    importDialogVisible.value = false
-    importFile.value = null
-    fetchData()
-  } catch (e: any) {
-    ElMessage.error(e?.response?.data?.error || '导入失败')
-  } finally {
-    importLoading.value = false
-  }
-}
-
-const handleFileChange = (file: any) => {
-  importFile.value = file.raw
 }
 
 const columns = [
@@ -133,36 +105,10 @@ onUnmounted(() => {
       </el-table-v2>
     </div>
 
-    <!-- 导入弹窗 -->
-    <el-dialog v-model="importDialogVisible" title="导入设备" width="480px">
-      <div style="margin-bottom: 12px; color: #606266; font-size: 14px">
-        上传 Excel 文件，Sheet 名需包含「设备」，列顺序：
-        <br />
-        <code>主机名 | 类型 | 管理IP | 数据中心 | 备注</code>
-      </div>
-      <el-upload
-        drag
-        :auto-upload="false"
-        :limit="1"
-        accept=".xlsx,.xls"
-        :on-change="handleFileChange"
-        :on-exceed="() => ElMessage.warning('只能上传一个文件')"
-      >
-        <el-icon style="font-size: 40px; color: #c0c4cc; margin-bottom: 8px">
-          <UploadFilled />
-        </el-icon>
-        <div>将文件拖到此处，或<em>点击上传</em></div>
-        <template #tip>
-          <div style="color: #909399; font-size: 12px">支持 .xlsx / .xls 格式</div>
-        </template>
-      </el-upload>
-      <template #footer>
-        <el-button @click="importDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="importLoading" @click="handleImport">
-          确认导入
-        </el-button>
-      </template>
-    </el-dialog>
+    <ImportDevice
+      v-model:visible="importDialogVisible"
+      @success="fetchData"
+    />
   </div>
 </template>
 
