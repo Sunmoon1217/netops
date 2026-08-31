@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 from django.http import JsonResponse
 from rest_framework import viewsets
@@ -10,34 +11,75 @@ from assets.models import (
     Cabinet,
     DataCenter,
     Device,
+    DeviceAccount,
     DeviceConfig,
     DeviceConnection,
     DeviceModel,
+    Interface,
+    NtpConfig,
     Room,
     SecurityZone,
+    SnmpConfig,
+    SyslogConfig,
     Vendor,
+    Vlan,
+    Vrf,
 )
+from ops.config_repo import save_config
 
 from .serializers import (
     CabinetSerializer,
     DataCenterSerializer,
+    DeviceAccountSerializer,
     DeviceConfigSerializer,
+    DeviceConnectionSerializer,
+    DeviceModelSerializer,
     DeviceSerializer,
+    InterfaceSerializer,
+    NtpConfigSerializer,
     RoomSerializer,
     SecurityZoneSerializer,
+    SnmpConfigSerializer,
+    SyslogConfigSerializer,
+    VendorSerializer,
+    VlanSerializer,
+    VrfSerializer,
 )
 
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# Overview
+# ---------------------------------------------------------------------------
+
 
 def overview(request):
-    """DCIM 概览统计"""
-    return JsonResponse({
-        "total_datacenters": DataCenter.objects.count(),
-        "total_rooms": Room.objects.count(),
-        "total_cabinets": Cabinet.objects.count(),
-        "active_cabinets": Cabinet.objects.filter(status="active").count(),
-    })
+    """资产管理概览统计"""
+    return JsonResponse(
+        {
+            "total_datacenters": DataCenter.objects.count(),
+            "total_rooms": Room.objects.count(),
+            "total_cabinets": Cabinet.objects.count(),
+            "active_cabinets": Cabinet.objects.filter(status="active").count(),
+            "total_security_zones": SecurityZone.objects.count(),
+            "total_devices": Device.objects.count(),
+            "total_vendors": Vendor.objects.count(),
+            "total_interfaces": Interface.objects.count(),
+            "active_interfaces": Interface.objects.filter(enabled=True).count(),
+            "total_vlans": Vlan.objects.count(),
+            "total_vrfs": Vrf.objects.count(),
+            "total_configs": DeviceConfig.objects.count(),
+            "total_device_accounts": DeviceAccount.objects.count(),
+            "total_snmp_configs": SnmpConfig.objects.count(),
+            "total_ntp_configs": NtpConfig.objects.count(),
+            "total_syslog_configs": SyslogConfig.objects.count(),
+        }
+    )
+
+
+# ---------------------------------------------------------------------------
+# DCIM ViewSets
+# ---------------------------------------------------------------------------
 
 
 class SecurityZoneViewSet(viewsets.ModelViewSet):
@@ -92,6 +134,22 @@ class CabinetViewSet(viewsets.ModelViewSet):
         return qs
 
 
+class VendorViewSet(viewsets.ModelViewSet):
+    queryset = Vendor.objects.all()
+    serializer_class = VendorSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name",)
+    ordering_fields = ("name",)
+
+
+class DeviceModelViewSet(viewsets.ModelViewSet):
+    queryset = DeviceModel.objects.select_related("vendor").all()
+    serializer_class = DeviceModelSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "vendor__name")
+    ordering_fields = ("name",)
+
+
 class DeviceViewSet(viewsets.ModelViewSet):
     queryset = Device.objects.select_related("idc", "cabinet", "security_zone", "device_model").all()
     serializer_class = DeviceSerializer
@@ -124,8 +182,110 @@ class DeviceConfigViewSet(viewsets.ModelViewSet):
         return qs
 
 
+class DeviceConnectionViewSet(viewsets.ModelViewSet):
+    queryset = DeviceConnection.objects.select_related("device").all()
+    serializer_class = DeviceConnectionSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("username", "device__hostname")
+    ordering_fields = ("created_at",)
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
 # ---------------------------------------------------------------------------
-# 导入功能
+# Network ViewSets
+# ---------------------------------------------------------------------------
+
+
+class VlanViewSet(viewsets.ModelViewSet):
+    queryset = Vlan.objects.all()
+    serializer_class = VlanSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "vid")
+    ordering_fields = ("vid", "name")
+
+
+class VrfViewSet(viewsets.ModelViewSet):
+    queryset = Vrf.objects.select_related("device").all()
+    serializer_class = VrfSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "device__hostname")
+    ordering_fields = ("name", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+class InterfaceViewSet(viewsets.ModelViewSet):
+    queryset = Interface.objects.select_related("device", "vrf").all()
+    serializer_class = InterfaceSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("interface", "device__hostname", "ip_address")
+    ordering_fields = ("interface", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        mode = self.request.query_params.get("mode")
+        if mode:
+            qs = qs.filter(mode=mode)
+        return qs
+
+
+class DeviceAccountViewSet(viewsets.ModelViewSet):
+    queryset = DeviceAccount.objects.select_related("device").all()
+    serializer_class = DeviceAccountSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("username", "device__hostname")
+    ordering_fields = ("username", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
+
+
+# ---------------------------------------------------------------------------
+# Baseline ViewSets
+# ---------------------------------------------------------------------------
+
+
+class SnmpConfigViewSet(viewsets.ModelViewSet):
+    queryset = SnmpConfig.objects.select_related("device").all()
+    serializer_class = SnmpConfigSerializer
+    permission_classes = (AllowAny,)
+    ordering_fields = ("created_at",)
+
+
+class NtpConfigViewSet(viewsets.ModelViewSet):
+    queryset = NtpConfig.objects.select_related("device").all()
+    serializer_class = NtpConfigSerializer
+    permission_classes = (AllowAny,)
+    ordering_fields = ("created_at",)
+
+
+class SyslogConfigViewSet(viewsets.ModelViewSet):
+    queryset = SyslogConfig.objects.select_related("device").all()
+    serializer_class = SyslogConfigSerializer
+    permission_classes = (AllowAny,)
+    ordering_fields = ("created_at",)
+
+
+# ---------------------------------------------------------------------------
+# Connection config map
 # ---------------------------------------------------------------------------
 
 CONNECTION_CONFIG_MAP = {
@@ -144,6 +304,11 @@ def _get_connection_config(vendor_name, device_type):
         (vendor_name, device_type),
         {"connection_type": "netmiko", "driver": ""},
     )
+
+
+# ---------------------------------------------------------------------------
+# Import
+# ---------------------------------------------------------------------------
 
 
 @api_view(["POST"])
@@ -177,7 +342,7 @@ def import_excel(request):
             try:
                 results[sheet_name] = importer(ws)
             except Exception as e:
-                logger.error(f"导入 {sheet_name} 失败: {e}")
+                logger.error("导入 %s 失败: %s", sheet_name, e)
                 results[sheet_name] = {"created": 0, "updated": 0, "errors": [str(e)]}
         else:
             results[sheet_name] = {"created": 0, "updated": 0, "errors": [], "skipped": True}
@@ -215,7 +380,8 @@ def _import_rooms(ws):
         try:
             dc = DataCenter.objects.get(name=str(row[0]).strip())
             _, is_created = Room.objects.update_or_create(
-                datacenter=dc, name=str(row[1]).strip(),
+                datacenter=dc,
+                name=str(row[1]).strip(),
                 defaults={"contact": str(row[2] or "").strip(), "remark": str(row[3] or "").strip()},
             )
             created += 1 if is_created else 0
@@ -236,7 +402,8 @@ def _import_cabinets(ws):
             dc = DataCenter.objects.get(name=str(row[0]).strip())
             room = Room.objects.get(datacenter=dc, name=str(row[1]).strip())
             _, is_created = Cabinet.objects.update_or_create(
-                room=room, name=str(row[2]).strip(),
+                room=room,
+                name=str(row[2]).strip(),
                 defaults={
                     "row": str(row[3] or "").strip(),
                     "total_u": int(row[4] or 42),
@@ -282,7 +449,6 @@ def _import_devices(ws):
         device_type = str(row[2] or "switch").strip()
         ip_address = str(row[1] or "").strip()
 
-        # 厂商和型号
         vendor = None
         device_model = None
         vendor_name = str(row[3] or "").strip()
@@ -292,7 +458,6 @@ def _import_devices(ws):
         if model_name and vendor:
             device_model, _ = DeviceModel.objects.get_or_create(name=model_name, vendor=vendor)
 
-        # 机柜
         dc = None
         cabinet = None
         dc_name = str(row[5] or "").strip()
@@ -306,7 +471,6 @@ def _import_devices(ws):
             except (DataCenter.DoesNotExist, Room.DoesNotExist, Cabinet.DoesNotExist):
                 errors.append(f"行 {row_idx}: 机柜路径 '{dc_name}/{room_name}/{cab_name}' 不存在")
 
-        # 安全区
         security_zone = None
         zone_name = str(row[8] or "").strip()
         if zone_name:
@@ -325,16 +489,13 @@ def _import_devices(ws):
         }
 
         try:
-            device, is_created = Device.objects.update_or_create(
-                hostname=hostname, defaults=device_defaults
-            )
+            device, is_created = Device.objects.update_or_create(hostname=hostname, defaults=device_defaults)
             created += 1 if is_created else 0
             updated += 0 if is_created else 1
         except Exception as e:
             errors.append(f"行 {row_idx}: {e}")
             continue
 
-        # 连接信息（第12-16列）
         account_type = str(row[12] or "").strip()
         username = str(row[13] or "").strip()
         password = str(row[14] or "").strip()
@@ -361,11 +522,6 @@ def _import_devices(ws):
 
 
 def _import_configs(ws):
-    """导入设备配置文件"""
-    from pathlib import Path
-
-    from ops.config_repo import CONFIG_REPO_PATH, save_config
-
     created, skipped, errors = 0, 0, []
 
     for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
@@ -381,6 +537,8 @@ def _import_configs(ws):
         except Device.DoesNotExist:
             errors.append(f"行 {row_idx}: 设备 '{hostname}' 不存在，请先导入设备")
             continue
+
+        from ops.config_repo import CONFIG_REPO_PATH
 
         if config_dir:
             config_path = Path(config_dir) / filename
@@ -408,7 +566,8 @@ def _import_configs(ws):
             continue
 
         DeviceConfig.objects.update_or_create(
-            device=device, git_commit_hash=commit_hash,
+            device=device,
+            git_commit_hash=commit_hash,
             defaults={"config_json": {}},
         )
         created += 1

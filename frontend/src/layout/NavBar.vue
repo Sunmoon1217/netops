@@ -20,6 +20,8 @@ const handleLogout = async () => {
         <el-sub-menu index="/devices">
           <template #title>设备管理</template>
           <el-menu-item index="/devices">设备列表</el-menu-item>
+          <el-menu-item index="/devices/interfaces">接口管理</el-menu-item>
+          <el-menu-item index="/devices/baseline">基线管理</el-menu-item>
           <el-menu-item index="/devices/parsers">解析器模板</el-menu-item>
         </el-sub-menu>
       </el-menu>

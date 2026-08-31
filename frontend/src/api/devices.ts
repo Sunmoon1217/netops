@@ -2,20 +2,20 @@ import api from './index'
 
 // 设备
 export const getDevices = (params?: Record<string, any>) =>
-  api.get('/api/dcim/devices/', { params })
+  api.get('/api/assets/devices/', { params })
 
 export const getDevice = (id: number) =>
-  api.get(`/api/dcim/devices/${id}/`)
+  api.get(`/api/assets/devices/${id}/`)
 
 // 设备配置
 export const getDeviceConfigs = (params?: Record<string, any>) =>
-  api.get('/api/dcim/device-configs/', { params })
+  api.get('/api/assets/device-configs/', { params })
 
 // 导入
 export const importDevices = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  return api.post('/api/dcim/import-devices/', formData, {
+  return api.post('/api/assets/import-devices/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 60000,
   })
@@ -33,10 +33,10 @@ export const getConfigHistory = (hostname: string, limit = 20) =>
 
 // DCIM
 export const getDatacenters = (params?: Record<string, any>) =>
-  api.get('/api/dcim/datacenters/', { params })
+  api.get('/api/assets/datacenters/', { params })
 
 export const getRooms = (params?: Record<string, any>) =>
-  api.get('/api/dcim/rooms/', { params })
+  api.get('/api/assets/rooms/', { params })
 
 export const getCabinets = (params?: Record<string, any>) =>
-  api.get('/api/dcim/cabinets/', { params })
+  api.get('/api/assets/cabinets/', { params })
