@@ -3,6 +3,7 @@ import { h } from 'vue'
 import { useRouter } from 'vue-router'
 import { getDevices } from '@/api/devices'
 import { ElButton } from 'element-plus'
+import { FixedDir } from 'element-plus/es/components/table-v2/src/constants'
 
 const router = useRouter()
 const tableRef = ref<HTMLElement | null>(null)
@@ -39,6 +40,15 @@ const goToConfig = (row: any) => {
   router.push(`/devices/${row.id}/config`)
 }
 
+const columns = [
+  { key: 'hostname', title: '主机名', dataKey: 'hostname', width: 180 },
+  { key: 'device_type', title: '类型', dataKey: 'device_type', width: 100 },
+  { key: 'ip_address', title: '管理IP', dataKey: 'ip_address', width: 140 },
+  { key: 'idc_name', title: '数据中心', dataKey: 'idc_name', width: 140 },
+  { key: 'remark', title: '备注', dataKey: 'remark', width: 200 },
+  { key: 'operation', title: '操作', width: 100, fixed: FixedDir.RIGHT },
+]
+
 const updateSize = () => {
   if (tableRef.value) {
     tableHeight.value = tableRef.value.clientHeight
@@ -62,7 +72,7 @@ onUnmounted(() => {
     <div class="list-header">
       <h2>设备列表</h2>
       <div class="list-actions">
-        <el-input v-model="search" placeholder="搜索..." clearable style="width: 220px" />
+        <el-input v-model="search" placeholder="搜索主机名 / IP" clearable style="width: 220px" />
         <el-button type="primary">添加设备</el-button>
       </div>
     </div>
@@ -70,14 +80,7 @@ onUnmounted(() => {
     <div ref="tableRef" class="table-wrapper">
       <el-table-v2
         v-loading="loading"
-        :columns="[
-          { key: 'hostname', title: '主机名', dataKey: 'hostname', width: 200 },
-          { key: 'device_type', title: '类型', dataKey: 'device_type', width: 100 },
-          { key: 'ip_address', title: '管理IP', dataKey: 'ip_address', width: 140 },
-          { key: 'idc_name', title: '数据中心', dataKey: 'idc_name', width: 140 },
-          { key: 'remark', title: '备注', dataKey: 'remark', width: 200 },
-          { key: 'config', title: '操作', width: 100, fixed: true },
-        ]"
+        :columns="columns"
         :data="filteredData"
         :height="tableHeight"
         :width="tableWidth"
@@ -87,7 +90,7 @@ onUnmounted(() => {
           <span style="font-weight: 600">{{ column.title }}</span>
         </template>
         <template #cell="{ column, rowData }">
-          <template v-if="column.key === 'config'">
+          <template v-if="column.key === 'operation'">
             <el-button size="small" link type="primary" @click="goToConfig(rowData)">
               配置
             </el-button>
