@@ -14,13 +14,15 @@ def parser_list(request):
     """获取所有已注册的解析器列表"""
     parsers = []
     for (vendor, device_type), parser_cls in ParserFactory._registry.items():
-        parsers.append({
-            "vendor": vendor,
-            "device_type": device_type,
-            "class_name": parser_cls.__name__,
-            "template_name": parser_cls.template_name,
-            "description": parser_cls.__doc__ or "",
-        })
+        parsers.append(
+            {
+                "vendor": vendor,
+                "device_type": device_type,
+                "class_name": parser_cls.__name__,
+                "template_name": parser_cls.template_name,
+                "description": parser_cls.__doc__ or "",
+            }
+        )
     return JsonResponse({"parsers": parsers})
 
 
@@ -39,11 +41,13 @@ def parser_template_detail(request, name):
     path = _TEMPLATES_DIR / name
     if not path.exists():
         return JsonResponse({"error": f"模板不存在: {name}"}, status=404)
-    return JsonResponse({
-        "name": name,
-        "content": path.read_text(encoding="utf-8"),
-        "size": path.stat().st_size,
-    })
+    return JsonResponse(
+        {
+            "name": name,
+            "content": path.read_text(encoding="utf-8"),
+            "size": path.stat().st_size,
+        }
+    )
 
 
 @require_http_methods(["PUT"])

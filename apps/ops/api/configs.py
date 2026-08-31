@@ -16,11 +16,13 @@ def git_content(request):
     if config_text is None:
         return JsonResponse({"error": "配置不存在"}, status=404)
 
-    return JsonResponse({
-        "hostname": hostname,
-        "commit_hash": commit_hash or "HEAD",
-        "config_text": config_text,
-    })
+    return JsonResponse(
+        {
+            "hostname": hostname,
+            "commit_hash": commit_hash or "HEAD",
+            "config_text": config_text,
+        }
+    )
 
 
 @require_GET

@@ -20,31 +20,13 @@ const router = createRouter({
       component: () => import('@/views/devices/index.vue'),
       meta: { requiresAuth: true },
       children: [
-        {
-          path: '',
-          name: 'device-list',
-          component: () => import('@/views/devices/list.vue'),
-        },
-        {
-          path: ':id/config',
-          name: 'device-config',
-          component: () => import('@/views/devices/config.vue'),
-        },
-        {
-          path: ':id/history',
-          name: 'device-history',
-          component: () => import('@/views/devices/history.vue'),
-        },
-        {
-          path: ':id/compare',
-          name: 'device-compare',
-          component: () => import('@/views/devices/compare.vue'),
-        },
-        {
-          path: 'parsers',
-          name: 'device-parsers',
-          component: () => import('@/views/devices/parsers.vue'),
-        },
+        { path: '', name: 'device-list', component: () => import('@/views/devices/list.vue') },
+        { path: ':id/config', name: 'device-config', component: () => import('@/views/devices/config.vue') },
+        { path: ':id/history', name: 'device-history', component: () => import('@/views/devices/history.vue') },
+        { path: ':id/compare', name: 'device-compare', component: () => import('@/views/devices/compare.vue') },
+        { path: 'interfaces', name: 'device-interfaces', component: () => import('@/views/devices/interfaces.vue') },
+        { path: 'baseline', name: 'device-baseline', component: () => import('@/views/devices/baseline.vue') },
+        { path: 'parsers', name: 'device-parsers', component: () => import('@/views/devices/parsers.vue') },
       ],
     },
   ],

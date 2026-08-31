@@ -57,7 +57,7 @@ const openEdit = (row: any) => {
 const handleEditSave = async () => {
   if (!editForm.value) return
   try {
-    await api.put(`/api/dcim/devices/${editForm.value.id}/`, editForm.value)
+    await api.put(`/api/assets/devices/${editForm.value.id}/`, editForm.value)
     ElMessage.success('保存成功')
     editDialogVisible.value = false
     fetchData()

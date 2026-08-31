@@ -17,10 +17,12 @@ def login(request):
         return Response({"error": "用户名或密码错误"}, status=status.HTTP_401_UNAUTHORIZED)
     token, _ = Token.objects.get_or_create(user=user)
     u = User.objects.get(pk=user.pk)
-    return Response({
-        "token": token.key,
-        "user": {"id": u.pk, "username": u.username},
-    })
+    return Response(
+        {
+            "token": token.key,
+            "user": {"id": u.pk, "username": u.username},
+        }
+    )
 
 
 @api_view(["POST"])
@@ -32,11 +34,13 @@ def logout(request):
 @api_view(["GET"])
 def me(request):
     u = User.objects.get(pk=request.user.pk)
-    return Response({
-        "id": u.pk,
-        "username": u.username,
-        "email": u.email,
-        "is_staff": u.is_staff,
-        "phone": u.phone,
-        "avatar": u.avatar,
-    })
+    return Response(
+        {
+            "id": u.pk,
+            "username": u.username,
+            "email": u.email,
+            "is_staff": u.is_staff,
+            "phone": u.phone,
+            "avatar": u.avatar,
+        }
+    )

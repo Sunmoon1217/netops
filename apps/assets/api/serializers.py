@@ -4,12 +4,19 @@ from assets.models import (
     Cabinet,
     DataCenter,
     Device,
+    DeviceAccount,
     DeviceConfig,
     DeviceConnection,
     DeviceModel,
+    Interface,
+    NtpConfig,
     Room,
     SecurityZone,
+    SnmpConfig,
+    SyslogConfig,
     Vendor,
+    Vlan,
+    Vrf,
 )
 
 
@@ -113,3 +120,72 @@ class DeviceConnectionSerializer(serializers.ModelSerializer):
                   "driver", "port", "account_type", "username", "enabled", "created_at")
         read_only_fields = ("id", "created_at")
         extra_kwargs = {"password": {"write_only": True}}
+
+
+class VlanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vlan
+        fields = ("id", "vid", "name", "description")
+        read_only_fields = ("id",)
+
+
+class VrfSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        model = Vrf
+        fields = ("id", "device", "device_hostname", "name", "rd", "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class InterfaceSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+    vrf_name = serializers.CharField(source="vrf.name", read_only=True, default="")
+
+    class Meta:
+        model = Interface
+        fields = ("id", "device", "device_hostname", "interface", "description", "enabled",
+                  "mode", "vlans", "vrf", "vrf_name", "type", "combo_type",
+                  "ip_address", "subnet_mask", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class DeviceAccountSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        model = DeviceAccount
+        fields = ("id", "device", "device_hostname", "username", "auth_type",
+                  "privilege", "enabled", "description", "is_active", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class SnmpConfigSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        model = SnmpConfig
+        fields = ("id", "device", "device_hostname", "version", "community_read",
+                  "community_write", "port", "trap_enabled", "trap_server", "trap_port",
+                  "enabled", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class NtpConfigSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        model = NtpConfig
+        fields = ("id", "device", "device_hostname", "server1", "server2", "server3",
+                  "timezone", "sync_interval", "enabled", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class SyslogConfigSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        model = SyslogConfig
+        fields = ("id", "device", "device_hostname", "server1", "server2", "port",
+                  "facility", "level", "enabled", "created_at")
+        read_only_fields = ("id", "created_at")
