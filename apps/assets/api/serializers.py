@@ -16,8 +16,7 @@ class DataCenterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataCenter
-        fields = ("id", "name", "address", "contact", "phone", "remark",
-                  "room_count", "cabinet_count", "created_at")
+        fields = ("id", "name", "address", "contact", "phone", "remark", "room_count", "cabinet_count", "created_at")
         read_only_fields = ("id", "created_at")
 
     def get_cabinet_count(self, obj) -> int:
@@ -30,8 +29,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Room
-        fields = ("id", "name", "datacenter", "datacenter_name", "contact",
-                  "remark", "cabinet_count", "created_at")
+        fields = ("id", "name", "datacenter", "datacenter_name", "contact", "remark", "cabinet_count", "created_at")
         read_only_fields = ("id", "created_at")
 
 
@@ -41,8 +39,19 @@ class CabinetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cabinet
-        fields = ("id", "name", "row", "room", "room_name", "datacenter_name",
-                  "total_u", "power_capacity", "status", "remark", "created_at")
+        fields = (
+            "id",
+            "name",
+            "row",
+            "room",
+            "room_name",
+            "datacenter_name",
+            "total_u",
+            "power_capacity",
+            "status",
+            "remark",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -51,9 +60,9 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import Device
+
         model = Device
-        fields = ("id", "hostname", "device_type", "ip_address", "idc", "idc_name",
-                  "remark", "created_at")
+        fields = ("id", "hostname", "device_type", "ip_address", "idc", "idc_name", "remark", "created_at")
         read_only_fields = ("id", "created_at")
 
 
@@ -62,7 +71,7 @@ class DeviceConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import DeviceConfig
+
         model = DeviceConfig
-        fields = ("id", "device", "device_name", "git_commit_hash", "config_json",
-                  "parse_duration", "collected_at")
+        fields = ("id", "device", "device_name", "git_commit_hash", "config_json", "parse_duration", "collected_at")
         read_only_fields = ("id", "collected_at")
