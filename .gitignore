@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+*.so
+*.dylib
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Django
+*.log
+logs/
+tmp/
+local_settings.py
+db.sqlite3
+media/
+staticfiles/
+www/
+
+# Coverage / Testing
+htmlcov/
+.coverage
+.coverage.*
+.pytest_cache/
+.tox/
+
+# Type checkers
+.mypy_cache/
+.pyright/
+.pyrefly/
+
+# uv / pip
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+docker-compose.override.yml
+
+# Archive
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+
+# Node (frontend)
+node_modules/
+.pnpm-store/
+
+# Misc
+nohup.out
+.service.pid
+
+# Reference archive
+network_ops-archive-*
+
+# AI / Compose
+.mimocode/
+AGENTS.md
+docs/
