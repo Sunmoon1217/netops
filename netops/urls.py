@@ -7,6 +7,7 @@ from . import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", include("core.api.urls")),
     path("api/", include("assets.api.urls")),
     path("favicon.ico", views.favicon),
     # 前端静态资源
