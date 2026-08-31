@@ -73,12 +73,13 @@ const handleClose = () => {
       </el-upload>
 
       <div style="color: #909399; font-size: 12px; line-height: 1.8">
-        支持导入以下 Sheet（按顺序）：<br />
+        支持导入以下 Sheet（按顺序）：
         <strong>数据中心</strong>：名称 | 地址 | 联系人 | 电话 | 备注<br />
         <strong>机房</strong>：数据中心 | 机房名称 | 联系人 | 备注<br />
         <strong>机柜</strong>：数据中心 | 机房 | 机柜编号 | 排 | U数 | 功率 | 状态 | 备注<br />
         <strong>安全区</strong>：名称 | 颜色 | 描述<br />
-        <strong>设备</strong>：主机名 | IP | 类型 | 厂商 | 型号 | 数据中心 | 机房 | 机柜 | 安全区 | U位 | 高度 | 备注 | 账号类型 | 用户名 | 密码 | Enable密码 | 端口 | 超时
+         <strong>设备</strong>：主机名 | IP | 类型 | 厂商 | 型号 | 数据中心 | 机房 | 机柜 | 安全区 | U位 | 高度 | 备注 | 账号类型 | 用户名 | 密码 | Enable密码 | 端口 | 超时<br />
+        <strong>配置文件</strong>：主机名 | 文件名(可选) | 配置目录(可选)
       </div>
 
       <el-button

@@ -31,6 +31,16 @@ const router = createRouter({
           component: () => import('@/views/devices/config.vue'),
         },
         {
+          path: ':id/history',
+          name: 'device-history',
+          component: () => import('@/views/devices/history.vue'),
+        },
+        {
+          path: ':id/compare',
+          name: 'device-compare',
+          component: () => import('@/views/devices/compare.vue'),
+        },
+        {
           path: 'parsers',
           name: 'device-parsers',
           component: () => import('@/views/devices/parsers.vue'),

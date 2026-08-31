@@ -168,6 +168,7 @@ def import_excel(request):
         "机柜": _import_cabinets,
         "安全区": _import_security_zones,
         "设备": _import_devices,
+        "配置文件": _import_configs,
     }
 
     for sheet_name, importer in sheet_importers.items():
@@ -357,3 +358,59 @@ def _import_devices(ws):
                 errors.append(f"行 {row_idx} 连接: {e}")
 
     return {"created": created, "updated": updated, "errors": errors}
+
+
+def _import_configs(ws):
+    """导入设备配置文件"""
+    from pathlib import Path
+
+    from ops.config_repo import CONFIG_REPO_PATH, save_config
+
+    created, skipped, errors = 0, 0, []
+
+    for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        if not row[0]:
+            continue
+
+        hostname = str(row[0]).strip()
+        filename = row[1] and str(row[1]).strip() or hostname + ".txt"
+        config_dir = str(row[2] or "").strip()
+
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            errors.append(f"行 {row_idx}: 设备 '{hostname}' 不存在，请先导入设备")
+            continue
+
+        if config_dir:
+            config_path = Path(config_dir) / filename
+        else:
+            config_path = CONFIG_REPO_PATH / hostname / filename
+
+        if not config_path.exists():
+            errors.append(f"行 {row_idx}: 配置文件不存在: {config_path}")
+            continue
+
+        try:
+            config_text = config_path.read_text(encoding="utf-8")
+        except Exception as e:
+            errors.append(f"行 {row_idx}: 读取失败: {e}")
+            continue
+
+        if not config_text.strip():
+            errors.append(f"行 {row_idx}: 配置文件为空")
+            continue
+
+        try:
+            commit_hash = save_config(hostname, config_text, message=f"import: {hostname} config")
+        except Exception as e:
+            errors.append(f"行 {row_idx}: 保存到 Git 失败: {e}")
+            continue
+
+        DeviceConfig.objects.update_or_create(
+            device=device, git_commit_hash=commit_hash,
+            defaults={"config_json": {}},
+        )
+        created += 1
+
+    return {"created": created, "skipped": skipped, "errors": errors}

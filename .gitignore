@@ -83,3 +83,4 @@ docs/
 src/auto-imports.d.ts
 src/components.d.ts
 .django-stub-gen/
+data/config_repo
