@@ -14,5 +14,5 @@ router.register(r"device-configs", views.DeviceConfigViewSet, basename="device-c
 urlpatterns = [
     path("dcim/", include(router.urls)),
     path("dcim/overview/", views.overview, name="dcim-overview"),
-    path("dcim/import-devices/", views.import_devices, name="import-devices"),
+    path("dcim/import-devices/", views.import_excel, name="import-devices"),
 ]
