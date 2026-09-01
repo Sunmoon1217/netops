@@ -2,10 +2,13 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
+import { IconSun, IconMoon } from '@/ui/navigation/menu-icons'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 const formRef = ref<FormInstance | null>(null)
 const loading = ref(false)
 
@@ -39,6 +42,8 @@ async function handleLogin() {
 <template>
   <div class="login-container">
     <div class="login-card">
+      <el-button class="theme-toggle" :icon="themeStore.isDark ? IconMoon : IconSun" text circle @click="themeStore.toggleDark()" />
+
       <div class="login-header">
         <h1>网络运维管理平台</h1>
         <p>NetOps Management Console</p>
@@ -92,11 +97,17 @@ async function handleLogin() {
   background: #f5f7fa;
 }
 .login-card {
+  position: relative;
   width: 400px;
   padding: 40px 36px 32px;
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+.theme-toggle {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 .login-header {
   text-align: center;
