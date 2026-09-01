@@ -1,9 +1,7 @@
-"""DeviceConfig post_save 信号处理
+"""信号处理
 
-流程:
-1. DeviceConfig 保存后触发
-2. 从 Git 读取配置原文 → 解析器解析 → 结果写回 config_json
-3. 如果 config_json 已有数据，从不同 key 分发到对应的 Saver 保存到数据库
+1. DeviceConfig post_save → 解析 + Saver
+2. Stage post_save → 触发下一阶段 Celery 任务
 """
 import logging
 
@@ -13,10 +11,67 @@ from django.dispatch import receiver
 logger = logging.getLogger(__name__)
 
 _processing = set()
+_processing_stage = set()
 
+
+# ---------------------------------------------------------------------------
+# Stage 阶段联动
+# ---------------------------------------------------------------------------
+
+def _trigger_next_stage(task, stage_type, input_data=None):
+    """创建并触发下一阶段"""
+    from core.models import Stage
+    from ops.tasks import run_collection_stage, run_parsing_stage, run_storage_stage
+
+    task_map = {
+        "collection": run_collection_stage,
+        "parsing": run_parsing_stage,
+        "storage": run_storage_stage,
+    }
+
+    next_stage = Stage.objects.create(
+        task=task, stage_type=stage_type, status="running", input_data=input_data or {},
+    )
+
+    task_func = task_map.get(stage_type)
+    if task_func:
+        task_func.delay(next_stage.pk)
+
+    logger.info("Triggered %s stage (id=%s) for task %s", stage_type, next_stage.pk, task.pk)
+
+
+@receiver(post_save, sender="core.Stage")
+def on_stage_complete(sender, instance, **kwargs):
+    """Stage 完成后触发下一阶段"""
+    if instance.status != "success":
+        return
+    if instance.pk in _processing_stage:
+        return
+
+    _processing_stage.add(instance.pk)
+    try:
+        from core.models import Task
+        task = instance.task
+
+        if instance.stage_type == "collection":
+            _trigger_next_stage(task, "parsing")
+        elif instance.stage_type == "parsing":
+            _trigger_next_stage(task, "storage")
+        elif instance.stage_type == "storage":
+            Task.objects.filter(id=task.pk).update(
+                status="success", result={"message": "All stages completed successfully"},
+            )
+    finally:
+        _processing_stage.discard(instance.pk)
+
+
+# ---------------------------------------------------------------------------
+# DeviceConfig post_save
+# ---------------------------------------------------------------------------
 
 @receiver(post_save, sender="assets.DeviceConfig")
 def on_device_config_saved(sender, instance, created, **kwargs):
+    """DeviceConfig 保存后触发解析"""
     if not created or instance.pk in _processing:
         return
 
@@ -26,18 +81,17 @@ def on_device_config_saved(sender, instance, created, **kwargs):
         hostname = device.hostname
         commit_hash = instance.git_commit_hash
 
-        # 1. 如果 config_json 为空，从 Git 读取并解析
+        # 如果 config_json 为空，从 Git 读取并解析
         config_json = instance.config_json
         if not config_json or config_json == {}:
             from ops.config_repo import get_config
+            from ops.parsers.factory import ParserFactory
 
             raw_text = get_config(hostname, commit_hash)
             if not raw_text:
                 logger.warning("DeviceConfig %s: Git 无配置 (hash=%s)", instance.pk,
                                commit_hash[:8] if commit_hash else "None")
                 return
-
-            from ops.parsers.factory import ParserFactory
 
             try:
                 parser = ParserFactory.get_parser(device)
@@ -50,7 +104,7 @@ def on_device_config_saved(sender, instance, created, **kwargs):
             instance.save(update_fields=["config_json", "updated_at"])
             logger.info("设备 %s 配置解析完成", hostname)
 
-        # 2. config_json 有数据 → 分发到 Saver
+        # config_json 有数据 → 分发到 Saver
         if config_json and config_json != {}:
             from ops.savers.registry import get_savers_for_config
 
