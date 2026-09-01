@@ -27,3 +27,7 @@ export const IconIp = createIcon('<circle cx="12" cy="12" r="10"/><ellipse cx="1
 export const IconSubnet = createIcon('<polygon points="12 2 22 8 12 14 2 8"/><polyline points="2 12 12 18 22 12"/><polyline points="2 16 12 22 22 16"/>')
 export const IconLayoutTop = createIcon('<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/>')
 export const IconLayoutSide = createIcon('<rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>')
+
+export const IconSun = createIcon('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>')
+
+export const IconMoon = createIcon('<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>')

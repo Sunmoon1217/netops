@@ -3,16 +3,18 @@ import { h, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLayoutStore } from '@/stores/layout'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
-  IconIp, IconSubnet, IconLayoutTop, IconLayoutSide,
+  IconIp, IconSubnet, IconLayoutTop, IconLayoutSide, IconSun, IconMoon,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
 const authStore = useAuthStore()
+const themeStore = useThemeStore()
 
 const isVertical = computed(() => layoutStore.mode === 'side')
 
@@ -100,6 +102,9 @@ const handleLogout = async () => {
     <div class="nav-actions">
       <el-tooltip :content="isVertical ? '切换为顶栏布局' : '切换为侧栏布局'" placement="bottom">
         <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" size="small" text @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
+      </el-tooltip>
+      <el-tooltip :content="themeStore.isDark ? '切换为亮色模式' : '切换为暗色模式'" placement="bottom">
+        <el-button :icon="themeStore.isDark ? IconMoon : IconSun" size="small" text @click="themeStore.toggleDark()" />
       </el-tooltip>
       <span class="nav-user">{{ authStore.user?.username }}</span>
       <el-button type="danger" text size="small" @click="handleLogout">退出</el-button>
