@@ -23,16 +23,13 @@ async function handleLogin() {
   if (!formRef.value) return
   try {
     await formRef.value.validate()
-  } catch {
-    return
-  }
+  } catch { return }
   loading.value = true
   try {
     await authStore.login(formData.value.username, formData.value.password)
     router.push('/')
   } catch (error: any) {
-    const msg = error?.response?.data?.error || '登录失败'
-    ElMessage.error(msg)
+    ElMessage.error(error?.response?.data?.error || '登录失败')
   } finally {
     loading.value = false
   }
@@ -49,39 +46,15 @@ async function handleLogin() {
         <p>NetOps Management Console</p>
       </div>
 
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="rules"
-        label-position="top"
-        size="large"
-        :disabled="loading"
-        @keyup.enter="handleLogin"
-      >
+      <el-form ref="formRef" :model="formData" :rules="rules" label-position="top" size="large" :disabled="loading" @keyup.enter="handleLogin">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="formData.username" placeholder="请输入用户名" autocomplete="username" />
         </el-form-item>
-
         <el-form-item label="密码" prop="password">
-          <el-input
-            v-model="formData.password"
-            type="password"
-            show-password
-            placeholder="请输入密码"
-            autocomplete="current-password"
-          />
+          <el-input v-model="formData.password" type="password" show-password placeholder="请输入密码" autocomplete="current-password" />
         </el-form-item>
-
         <el-form-item>
-          <el-button
-            type="primary"
-            class="login-button"
-            size="large"
-            :loading="loading"
-            @click="handleLogin"
-          >
-            登 录
-          </el-button>
+          <el-button type="primary" class="login-button" size="large" :loading="loading" @click="handleLogin">登 录</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -94,15 +67,15 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #f5f7fa;
+  background: var(--el-bg-color-page);
 }
 .login-card {
   position: relative;
   width: 400px;
   padding: 40px 36px 32px;
   border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  background: var(--el-fill-color-blank);
+  box-shadow: var(--el-box-shadow-light);
 }
 .theme-toggle {
   position: absolute;
@@ -117,12 +90,12 @@ async function handleLogin() {
   margin: 0 0 6px;
   font-size: 22px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 .login-header p {
   margin: 0;
   font-size: 13px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 .login-button {
   width: 100%;
