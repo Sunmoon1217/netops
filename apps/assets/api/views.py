@@ -821,3 +821,63 @@ class NatRuleViewSet(viewsets.ModelViewSet):
         if device_id:
             qs = qs.filter(device_id=device_id)
         return qs
+
+
+# ---------------------------------------------------------------------------
+# IPAM ViewSets
+# ---------------------------------------------------------------------------
+
+class TagViewSet(viewsets.ModelViewSet):
+    from assets.models import Tag
+
+    from .serializers import TagSerializer
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name",)
+    ordering_fields = ("name", "created_at")
+
+
+class SubnetViewSet(viewsets.ModelViewSet):
+    from assets.models import Subnet
+
+    from .serializers import SubnetSerializer
+    queryset = Subnet.objects.prefetch_related("tags").all()
+    serializer_class = SubnetSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("network", "description")
+    ordering_fields = ("network", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        datacenter = self.request.query_params.get("datacenter")
+        if datacenter:
+            qs = qs.filter(datacenter_id=datacenter)
+        tag = self.request.query_params.get("tag")
+        if tag:
+            qs = qs.filter(tags__id=tag)
+        return qs
+
+
+class IPAddressViewSet(viewsets.ModelViewSet):
+    from assets.models import IPAddress
+
+    from .serializers import IPAddressSerializer
+    queryset = IPAddress.objects.select_related("subnet", "device", "security_zone").all()
+    serializer_class = IPAddressSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("ip_address", "description", "device__hostname")
+    ordering_fields = ("ip_address", "created_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        subnet = self.request.query_params.get("subnet")
+        if subnet:
+            qs = qs.filter(subnet_id=subnet)
+        status = self.request.query_params.get("status")
+        if status:
+            qs = qs.filter(status=status)
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs

@@ -353,3 +353,49 @@ class NatRuleSerializer(serializers.ModelSerializer):
                   "translated_source", "translated_destination", "translated_service",
                   "description", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
+
+
+# ---------------------------------------------------------------------------
+# IPAM Serializers
+# ---------------------------------------------------------------------------
+
+class TagSerializer(serializers.ModelSerializer):
+    subnet_count = serializers.IntegerField(source="subnets.count", read_only=True)
+
+    class Meta:
+        from assets.models import Tag
+        model = Tag
+        fields = ("id", "name", "color", "subnet_count", "created_at")
+        read_only_fields = ("id", "created_at")
+
+
+class SubnetSerializer(serializers.ModelSerializer):
+    tag_names = serializers.SerializerMethodField()
+    ip_count = serializers.IntegerField(source="ip_addresses.count", read_only=True)
+    total_ips = serializers.IntegerField(read_only=True)
+    used_ips = serializers.IntegerField(read_only=True)
+    utilization = serializers.FloatField(read_only=True)
+
+    class Meta:
+        from assets.models import Subnet
+        model = Subnet
+        fields = ("id", "network", "tags", "tag_names", "parent", "gateway", "vlan",
+                  "datacenter", "security_zone", "vrf", "description",
+                  "ip_count", "total_ips", "used_ips", "utilization", "created_at")
+        read_only_fields = ("id", "created_at")
+
+    def get_tag_names(self, obj):
+        return list(obj.tags.values_list("name", flat=True))
+
+
+class IPAddressSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+    subnet_network = serializers.CharField(source="subnet.network", read_only=True, default="")
+    security_zone_name = serializers.CharField(source="security_zone.name", read_only=True, default="")
+
+    class Meta:
+        from assets.models import IPAddress
+        model = IPAddress
+        fields = ("id", "ip_address", "subnet", "subnet_network", "security_zone", "security_zone_name",
+                  "status", "device", "device_hostname", "interface", "description", "created_at")
+        read_only_fields = ("id", "created_at")

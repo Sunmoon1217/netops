@@ -451,8 +451,10 @@ class SyslogConfig(models.Model):
 # SLB (LTM - Local Traffic Manager)
 # ---------------------------------------------------------------------------
 
+
 class LtmVirtualServer(ConfigBase):
     """虚拟服务器"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     vs_address = models.CharField(max_length=255, verbose_name="虚拟地址")
     vs_port = models.CharField(max_length=15, null=True, verbose_name="端口")
@@ -477,6 +479,7 @@ class LtmVirtualServer(ConfigBase):
 
 class LtmPool(ConfigBase):
     """LTM 池"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     mode = models.CharField(max_length=255, verbose_name="负载模式")
     monitors = models.JSONField(default=list, verbose_name="监控列表")
@@ -489,6 +492,7 @@ class LtmPool(ConfigBase):
 
 class LtmPoolMember(models.Model):
     """LTM 池成员"""
+
     pool_name = models.CharField(max_length=255, blank=True, default="", verbose_name="关联池名称")
     name = models.CharField(max_length=255, verbose_name="成员名称")
     address = models.CharField(max_length=255, verbose_name="地址")
@@ -500,6 +504,7 @@ class LtmPoolMember(models.Model):
 
 class LtmProfile(ConfigBase):
     """LTM Profile"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     type = models.CharField(max_length=255, verbose_name="类型")
     raw = models.JSONField(verbose_name="原始配置")
@@ -511,6 +516,7 @@ class LtmProfile(ConfigBase):
 
 class LtmIRule(ConfigBase):
     """LTM iRule"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     raw = models.JSONField(verbose_name="原始配置")
 
@@ -521,6 +527,7 @@ class LtmIRule(ConfigBase):
 
 class LtmSNAT(ConfigBase):
     """LTM SNAT"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     address = models.CharField(max_length=255, verbose_name="地址")
 
@@ -531,6 +538,7 @@ class LtmSNAT(ConfigBase):
 
 class LtmPersist(ConfigBase):
     """LTM 会话保持"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     type = models.CharField(max_length=255, verbose_name="类型")
     raw = models.JSONField(verbose_name="原始配置")
@@ -544,8 +552,10 @@ class LtmPersist(ConfigBase):
 # GSLB (GTM - Global Traffic Manager)
 # ---------------------------------------------------------------------------
 
+
 class GtmDatacenter(ConfigBase):
     """GTM 数据中心"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
 
     class Meta:
@@ -555,6 +565,7 @@ class GtmDatacenter(ConfigBase):
 
 class GtmWideip(ConfigBase):
     """GTM Wide IP"""
+
     name = models.CharField(max_length=255, verbose_name="域名")
     rtype = models.CharField(max_length=255, verbose_name="记录类型")
     lb_mode = models.CharField(max_length=255, verbose_name="负载模式")
@@ -568,6 +579,7 @@ class GtmWideip(ConfigBase):
 
 class GtmPool(ConfigBase):
     """GTM 池"""
+
     name = models.CharField(max_length=255, verbose_name="名称")
     lb_mode = models.CharField(max_length=255, default="round-robin", verbose_name="负载模式")
     alternate_mode = models.CharField(max_length=255, default="round-robin", verbose_name="备选模式")
@@ -586,11 +598,15 @@ class GtmPool(ConfigBase):
 # Firewall Policy
 # ---------------------------------------------------------------------------
 
+
 class AddressBook(ConfigBase):
     """地址簿"""
+
     ADDRESS_TYPE_CHOICES = (
-        ("host", "主机"), ("subnet", "子网"),
-        ("range", "地址范围"), ("addressbook", "地址簿"),
+        ("host", "主机"),
+        ("subnet", "子网"),
+        ("range", "地址范围"),
+        ("addressbook", "地址簿"),
     )
     name = models.CharField(max_length=255, blank=True, null=True, verbose_name="名称")
     address_type = models.CharField(max_length=20, choices=ADDRESS_TYPE_CHOICES, verbose_name="地址类型")
@@ -598,7 +614,9 @@ class AddressBook(ConfigBase):
     ip_netmask = models.IntegerField(blank=True, null=True, verbose_name="子网掩码")
     ip_start = models.GenericIPAddressField(blank=True, null=True, verbose_name="起始地址")
     ip_end = models.GenericIPAddressField(blank=True, null=True, verbose_name="结束地址")
-    parent = models.ForeignKey("self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children", verbose_name="上级地址簿")
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True, related_name="children", verbose_name="上级地址簿"
+    )
     description = models.TextField(blank=True, default="", verbose_name="描述")
 
     class Meta:
@@ -608,9 +626,13 @@ class AddressBook(ConfigBase):
 
 class Service(ConfigBase):
     """服务"""
+
     PROTOCOL_CHOICES = (
-        ("tcp", "TCP"), ("udp", "UDP"), ("tcp-udp", "TCP/UDP"),
-        ("icmp", "ICMP"), ("any", "ANY"),
+        ("tcp", "TCP"),
+        ("udp", "UDP"),
+        ("tcp-udp", "TCP/UDP"),
+        ("icmp", "ICMP"),
+        ("any", "ANY"),
     )
     name = models.CharField(max_length=255, verbose_name="名称")
     protocol = models.CharField(max_length=10, choices=PROTOCOL_CHOICES, verbose_name="协议")
@@ -626,6 +648,7 @@ class Service(ConfigBase):
 
 class Policy(ConfigBase):
     """安全策略"""
+
     ACTION_CHOICES = (("allow", "允许"), ("deny", "拒绝"))
     policy_id = models.CharField(max_length=50, verbose_name="策略ID")
     order = models.PositiveIntegerField(verbose_name="策略顺序")
@@ -633,7 +656,9 @@ class Policy(ConfigBase):
     action = models.CharField(max_length=20, choices=ACTION_CHOICES, default="allow", verbose_name="动作")
     enabled = models.BooleanField(default=True, verbose_name="启用")
     source_addresses = models.ManyToManyField(AddressBook, related_name="source_policies", verbose_name="源地址")
-    destination_addresses = models.ManyToManyField(AddressBook, related_name="destination_policies", verbose_name="目的地址")
+    destination_addresses = models.ManyToManyField(
+        AddressBook, related_name="destination_policies", verbose_name="目的地址"
+    )
     services = models.ManyToManyField(Service, related_name="policies", verbose_name="服务")
     log = models.BooleanField(default=False, verbose_name="记录日志")
     description = models.TextField(blank=True, default="", verbose_name="描述")
@@ -649,22 +674,160 @@ class Policy(ConfigBase):
 
 class NatRule(ConfigBase):
     """NAT 规则"""
+
     NAT_TYPE_CHOICES = (
-        ("snat", "源地址转换"), ("dnat", "目的地址转换"), ("dulnat", "双向地址转换"),
+        ("snat", "源地址转换"),
+        ("dnat", "目的地址转换"),
+        ("dulnat", "双向地址转换"),
     )
     order = models.PositiveIntegerField(verbose_name="规则顺序")
     name = models.CharField(max_length=255, verbose_name="规则名称")
     nat_type = models.CharField(max_length=10, choices=NAT_TYPE_CHOICES, verbose_name="转换类型")
     enabled = models.BooleanField(default=True, verbose_name="启用")
     source_addresses = models.ManyToManyField(AddressBook, related_name="source_nat_rules", verbose_name="匹配源地址")
-    destination_addresses = models.ManyToManyField(AddressBook, related_name="destination_nat_rules", verbose_name="匹配目的地址")
+    destination_addresses = models.ManyToManyField(
+        AddressBook, related_name="destination_nat_rules", verbose_name="匹配目的地址"
+    )
     services = models.ManyToManyField(Service, related_name="nat_rules", verbose_name="匹配服务")
-    translated_source = models.ForeignKey(AddressBook, on_delete=models.SET_NULL, null=True, blank=True, related_name="translated_src_rules", verbose_name="转换后源地址")
-    translated_destination = models.ForeignKey(AddressBook, on_delete=models.SET_NULL, null=True, blank=True, related_name="translated_dst_rules", verbose_name="转换后目的地址")
-    translated_service = models.ForeignKey(Service, on_delete=models.SET_NULL, null=True, blank=True, related_name="translated_svc_rules", verbose_name="转换后服务")
+    translated_source = models.ForeignKey(
+        AddressBook,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="translated_src_rules",
+        verbose_name="转换后源地址",
+    )
+    translated_destination = models.ForeignKey(
+        AddressBook,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="translated_dst_rules",
+        verbose_name="转换后目的地址",
+    )
+    translated_service = models.ForeignKey(
+        Service,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="translated_svc_rules",
+        verbose_name="转换后服务",
+    )
     description = models.TextField(blank=True, default="", verbose_name="描述")
 
     class Meta:
         verbose_name = "NAT 规则"
         verbose_name_plural = verbose_name
         constraints = (models.UniqueConstraint(fields=["device", "order"], name="uni_nat_device_order"),)
+
+
+# ---------------------------------------------------------------------------
+# IPAM
+# ---------------------------------------------------------------------------
+
+
+class Tag(models.Model):
+    """标签"""
+
+    name = models.CharField(max_length=50, unique=True, verbose_name="标签名称")
+    color = models.CharField(max_length=7, default="#3b82f6", verbose_name="颜色")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+
+    class Meta:
+        verbose_name = "标签"
+        verbose_name_plural = verbose_name
+        ordering = ("name",)
+
+    def __str__(self):
+        return self.name
+
+
+class Subnet(models.Model):
+    """网段"""
+
+    network = models.CharField(max_length=18, unique=True, verbose_name="网段 (CIDR)")
+    tags = models.ManyToManyField(Tag, blank=True, related_name="subnets", verbose_name="标签")
+    parent = models.ForeignKey(
+        "self", on_delete=models.CASCADE, null=True, blank=True, related_name="children", verbose_name="父网段"
+    )
+    gateway = models.GenericIPAddressField(null=True, blank=True, verbose_name="默认网关")
+    vlan = models.CharField(max_length=20, blank=True, default="", verbose_name="VLAN")
+    datacenter = models.ForeignKey(
+        DataCenter, on_delete=models.SET_NULL, null=True, blank=True, related_name="subnets", verbose_name="数据中心"
+    )
+    security_zone = models.ForeignKey(
+        SecurityZone, on_delete=models.SET_NULL, null=True, blank=True, related_name="subnets", verbose_name="安全区"
+    )
+    vrf = models.CharField(max_length=50, blank=True, default="", verbose_name="所属VRF")
+    description = models.CharField(max_length=255, blank=True, default="", verbose_name="描述")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "网段"
+        verbose_name_plural = verbose_name
+        ordering = ("network",)
+
+    def __str__(self):
+        tag_names = ", ".join(self.tags.values_list("name", flat=True))
+        return f"{self.network}" + (f" [{tag_names}]" if tag_names else "")
+
+    @property
+    def total_ips(self):
+        import ipaddress
+
+        try:
+            return ipaddress.ip_network(self.network, strict=False).num_addresses - 2
+        except Exception:
+            return 0
+
+    @property
+    def used_ips(self):
+        if not self.pk:
+            return 0
+        return self.ip_addresses.filter(status="used").count()
+
+    @property
+    def utilization(self):
+        total = self.total_ips
+        if total <= 0:
+            return 0
+        return round(self.used_ips / total * 100, 1)
+
+
+class IPAddress(models.Model):
+    """IP地址"""
+
+    ip_address = models.GenericIPAddressField(unique=True, verbose_name="IP地址")
+    subnet = models.ForeignKey(
+        Subnet, on_delete=models.SET_NULL, null=True, blank=True, related_name="ip_addresses", verbose_name="所属网段"
+    )
+    security_zone = models.ForeignKey(
+        SecurityZone,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ip_addresses",
+        verbose_name="安全区",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[("used", "已使用"), ("reserved", "预留"), ("available", "可用")],
+        default="used",
+        verbose_name="状态",
+    )
+    device = models.ForeignKey(
+        Device, on_delete=models.SET_NULL, null=True, blank=True, related_name="ip_addresses", verbose_name="关联设备"
+    )
+    interface = models.CharField(max_length=100, blank=True, default="", verbose_name="关联接口")
+    description = models.CharField(max_length=255, blank=True, default="", verbose_name="描述")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "IP地址"
+        verbose_name_plural = verbose_name
+        ordering = ("ip_address",)
+
+    def __str__(self):
+        return self.ip_address

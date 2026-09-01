@@ -49,6 +49,11 @@ router.register(r"services", views.ServiceViewSet, basename="service")
 router.register(r"policies", views.PolicyViewSet, basename="policy")
 router.register(r"nat-rules", views.NatRuleViewSet, basename="nat-rule")
 
+# IPAM
+router.register(r"tags", views.TagViewSet, basename="tag")
+router.register(r"subnets", views.SubnetViewSet, basename="subnet")
+router.register(r"ip-addresses", views.IPAddressViewSet, basename="ip-address")
+
 urlpatterns = [
     path("assets/", include(router.urls)),
     path("assets/overview/", views.overview, name="assets-overview"),

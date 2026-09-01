@@ -40,6 +40,17 @@ const router = createRouter({
         { path: 'firewall', name: 'config-firewall', component: () => import('@/views/config/firewall.vue') },
       ],
     },
+    {
+      path: '/ipam',
+      component: () => import('@/views/devices/index.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/ipam/subnets' },
+        { path: 'subnets', name: 'ipam-subnets', component: () => import('@/views/ipam/index.vue') },
+        { path: 'ip-addresses', name: 'ipam-ip-addresses', component: () => import('@/views/ipam/ip-address.vue') },
+        { path: 'tags', name: 'ipam-tags', component: () => import('@/views/ipam/tags.vue') },
+      ],
+    },
   ],
 })
 
