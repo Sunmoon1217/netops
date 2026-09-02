@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { h, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElIcon } from 'element-plus'
+import type { Component } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
-import { useAuthStore } from '@/stores/auth'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
@@ -12,12 +13,12 @@ import {
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
-const authStore = useAuthStore()
 
 const isVertical = computed(() => layoutStore.mode === 'side')
+const isCollapsed = computed(() => layoutStore.collapsed)
 
-function renderIcon(icon: any) {
-  return () => h('span', { class: 'menu-icon' }, [h(icon)])
+function renderIcon(icon: Component) {
+  return () => h(ElIcon, null, { default: () => h(icon) })
 }
 
 interface MenuItem {
@@ -59,23 +60,21 @@ const menuOptions: MenuItem[] = [
 const handleMenuSelect = (index: string) => {
   if (index.startsWith('/')) router.push(index)
 }
-
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
-}
 </script>
 
 <template>
-  <div class="app-nav" :class="{ vertical: isVertical }">
+  <div class="app-nav" :class="{ vertical: isVertical, collapsed: isVertical && isCollapsed }">
     <div class="nav-logo">
-      <span class="logo-text"><strong>Network Ops</strong></span>
+      <span v-if="!isVertical || !isCollapsed" class="logo-text"><strong>Network Ops</strong></span>
+      <span v-else class="logo-icon"><strong>N</strong></span>
     </div>
 
     <el-menu
       :mode="isVertical ? 'vertical' : 'horizontal'"
       :default-active="route.path"
+      :collapse="isVertical && isCollapsed"
       unique-opened
+      :collapse-transition="true"
       class="app-menu"
       @select="handleMenuSelect"
     >
@@ -96,15 +95,10 @@ const handleLogout = async () => {
         </el-menu-item>
       </template>
     </el-menu>
-
-    <div class="nav-actions">
-      <span class="nav-user">{{ authStore.user?.username }}</span>
-      <el-button type="danger" text size="small" @click="handleLogout">退出</el-button>
-    </div>
   </div>
 </template>
 
-<style scoped>
+<style lang="css" scoped>
 .app-nav {
   --nav-height: 3rem;
   display: flex;
@@ -113,8 +107,8 @@ const handleLogout = async () => {
   height: var(--nav-height);
   padding: 0 1.25rem;
   box-sizing: border-box;
-  background: var(--el-fill-color-blank, #fff);
-  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-fill-color-blank);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 .app-nav.vertical {
   flex-direction: column;
@@ -138,22 +132,15 @@ const handleLogout = async () => {
 .app-nav:not(.vertical) .nav-logo { margin-right: 32px; }
 .app-nav.vertical .nav-logo {
   width: 100%;
-  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary, #303133); }
-.nav-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.nav-user { font-size: 14px; color: var(--el-text-color-secondary, #909399); }
+.logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary); }
+.logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
 :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); }
 :deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; }
 :deep(.el-sub-menu) { height: var(--nav-height); }
 :deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; }
 .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
-:deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light, #f5f7fa); }
-:deep(.el-menu-item.is-active) { color: var(--el-color-primary, #409eff); }
-.menu-icon { margin-right: 4px; }
+:deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); }
+:deep(.el-menu-item.is-active) { color: var(--el-color-primary); }
 </style>

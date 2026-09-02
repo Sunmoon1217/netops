@@ -3,12 +3,12 @@ import { computed } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
 
 const layoutStore = useLayoutStore()
-const sidebarWidth = computed(() => layoutStore.sidebarWidth)
+const isCollapsed = computed(() => layoutStore.collapsed)
 </script>
 
 <template>
   <el-container class="side-layout" direction="horizontal">
-    <el-aside :width="sidebarWidth + 'px'" class="side-aside">
+    <el-aside :width="isCollapsed ? '64px' : '160px'" class="side-aside">
       <slot name="nav" />
     </el-aside>
     <el-main class="side-main">
@@ -17,19 +17,19 @@ const sidebarWidth = computed(() => layoutStore.sidebarWidth)
   </el-container>
 </template>
 
-<style scoped>
+<style lang="css" scoped>
 .side-layout { height: 100vh; }
 .side-aside {
   overflow-y: auto;
   overflow-x: hidden;
   transition: width 0.3s;
-  background: var(--el-fill-color-blank, #fff);
-  border-right: 1px solid var(--el-border-color, #dcdfe6);
+  background: var(--el-fill-color-blank);
+  border-right: 1px solid var(--el-border-color);
 }
 .side-main {
   flex: 1;
   padding: 16px;
   overflow: auto;
-  background: var(--el-bg-color-page, #f5f7fa);
+  background: var(--el-bg-color-page);
 }
 </style>
