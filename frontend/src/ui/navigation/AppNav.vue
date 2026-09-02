@@ -144,4 +144,16 @@ const handleMenuSelect = (index: string) => {
 .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
 :deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); }
 :deep(.el-menu-item.is-active) { color: var(--el-color-primary); }
+
+/* 竖向模式：子菜单内联展开，推开下方选项 */
+.app-nav.vertical :deep(.el-sub-menu .el-menu) {
+  position: static !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+.app-nav.vertical :deep(.el-menu--popup) {
+  position: static !important;
+  box-shadow: none !important;
+  border: none !important;
+}
 </style>
