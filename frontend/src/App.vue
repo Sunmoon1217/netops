@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLayoutStore } from '@/stores/layout'
 import AppNav from '@/ui/navigation/AppNav.vue'
+import FloatingActions from '@/ui/navigation/FloatingActions.vue'
 import TopLayout from '@/layout/TopLayout.vue'
 import SideLayout from '@/layout/SideLayout.vue'
 
@@ -28,7 +29,10 @@ if (authStore.isAuthenticated) {
       <template #main><router-view /></template>
     </SideLayout>
   </div>
-  <router-view v-else />
+  <template v-else>
+    <router-view />
+    <FloatingActions />
+  </template>
 </template>
 
 <style>

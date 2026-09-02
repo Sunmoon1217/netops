@@ -3,18 +3,16 @@ import { h, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useLayoutStore } from '@/stores/layout'
 import { useAuthStore } from '@/stores/auth'
-import { useThemeStore } from '@/stores/theme'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
-  IconIp, IconSubnet, IconLayoutTop, IconLayoutSide, IconSun, IconMoon,
+  IconIp, IconSubnet,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
 const authStore = useAuthStore()
-const themeStore = useThemeStore()
 
 const isVertical = computed(() => layoutStore.mode === 'side')
 
@@ -100,12 +98,6 @@ const handleLogout = async () => {
     </el-menu>
 
     <div class="nav-actions">
-      <el-tooltip :content="isVertical ? '切换为顶栏布局' : '切换为侧栏布局'" placement="bottom">
-        <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" size="small" text @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
-      </el-tooltip>
-      <el-tooltip :content="themeStore.isDark ? '切换为亮色模式' : '切换为暗色模式'" placement="bottom">
-        <el-button :icon="themeStore.isDark ? IconMoon : IconSun" size="small" text @click="themeStore.toggleDark()" />
-      </el-tooltip>
       <span class="nav-user">{{ authStore.user?.username }}</span>
       <el-button type="danger" text size="small" @click="handleLogout">退出</el-button>
     </div>
@@ -130,11 +122,15 @@ const handleLogout = async () => {
   padding: 0;
   border-bottom: none;
   border-right: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  overflow: hidden;
 }
 .app-nav.vertical :deep(.el-menu) {
   width: 100%;
+  min-width: 160px;
   flex: 1;
   border-right: none;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 .nav-logo {
   display: flex;
@@ -165,7 +161,9 @@ const handleLogout = async () => {
 }
 .nav-user { font-size: 14px; color: var(--el-text-color-secondary, #909399); }
 :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); }
-:deep(.el-menu-item), :deep(.el-sub-menu__title) { height: var(--nav-height); line-height: var(--nav-height); }
+:deep(.el-menu-item), :deep(.el-sub-menu__title) { height: var(--nav-height); line-height: var(--nav-height); min-width: 0; }
 .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
+:deep(.el-sub-menu) { position: relative; }
+:deep(.el-menu--popup) { min-width: 160px; z-index: 2001; }
 .menu-icon { margin-right: 4px; }
 </style>
