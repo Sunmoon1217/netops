@@ -221,7 +221,7 @@ def route_list(request):
 
     data = [
         {
-            "id": r.id, "device": r.vrf.device.hostname, "vrf": r.vrf.name,
+            "id": r.pk, "device": r.vrf.device.hostname, "vrf": r.vrf.name,
             "destination": r.destination, "nexthop": r.nexthop,
             "interface": r.interface, "protocol": r.protocol, "metric": r.metric,
         }
