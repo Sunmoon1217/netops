@@ -7,7 +7,7 @@ import AppNav from '@/ui/navigation/AppNav.vue'
 import FloatingActions from '@/ui/navigation/FloatingActions.vue'
 import TopLayout from '@/layout/TopLayout.vue'
 import SideLayout from '@/layout/SideLayout.vue'
-const Login = () => import('@/views/login/Login.vue')
+import Login from '@/views/login/Login.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
