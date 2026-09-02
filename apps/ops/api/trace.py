@@ -1,6 +1,7 @@
-"""路径追踪 API"""
+"""路径追踪 + 路由采集 API"""
 import logging
 
+import requests
 from rest_framework import status as http_status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
@@ -47,15 +48,23 @@ def path_trace(request):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def route_collect(request):
-    """路由采集: POST /api/trace/route-collect/
-    Body: {"device_id": 1, "raw_text": "...", "template": "route"}
+    """路由采集: 从外部服务获取路由表，TTP 解析后保存
+
+    POST /api/trace/route-collect/
+    Body: {
+        "device_id": 1,
+        "api_url": "http://10.0.0.1/api/routing-table",
+        "template": "route",
+        "vrf_name": "default"
+    }
     """
     device_id = request.data.get("device_id")
-    raw_text = request.data.get("raw_text", "")
+    api_url = request.data.get("api_url", "")
     template_name = request.data.get("template", "route")
+    vrf_name = request.data.get("vrf_name", "default")
 
-    if not device_id or not raw_text:
-        return Response({"error": "device_id 和 raw_text 必填"}, status=http_status.HTTP_400_BAD_REQUEST)
+    if not device_id:
+        return Response({"error": "device_id 必填"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     from assets.models import Device, Route, Vrf
 
@@ -63,6 +72,20 @@ def route_collect(request):
         device = Device.objects.get(pk=device_id)
     except Device.DoesNotExist:
         return Response({"error": f"设备 {device_id} 不存在"}, status=http_status.HTTP_404_NOT_FOUND)
+
+    # 从外部 API 获取路由数据
+    raw_text = ""
+    if api_url:
+        try:
+            resp = requests.get(api_url, timeout=30, verify=False)
+            resp.raise_for_status()
+            raw_text = resp.text
+        except requests.RequestException as e:
+            logger.error("获取路由数据失败: %s - %s", api_url, e)
+            return Response({"error": f"获取路由数据失败: {e}"}, status=http_status.HTTP_502_BAD_GATEWAY)
+
+    if not raw_text:
+        return Response({"error": "未获取到路由数据"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     # TTP 解析
     try:
@@ -83,13 +106,16 @@ def route_collect(request):
         return Response({"error": f"TTP 解析失败: {e}"}, status=http_status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # 保存路由
+    vrf, _ = Vrf.objects.get_or_create(device=device, name=vrf_name)
+    old_count = Route.objects.filter(vrf=vrf).count()
+    Route.objects.filter(vrf=vrf).delete()
+
     routes_data = []
     if parsed and isinstance(parsed, list) and len(parsed) > 0:
         routes_data = parsed[0].get("routes", [])
 
-    vrf, _ = Vrf.objects.get_or_create(device=device, name="default")
-    created, updated, errors = 0, 0, []
-
+    created = 0
+    errors = []
     for route in routes_data:
         destination = route.get("destination", "")
         nexthop = route.get("nexthop")
@@ -99,70 +125,28 @@ def route_collect(request):
 
         if not destination:
             continue
-
         try:
-            _, is_created = Route.objects.update_or_create(
+            Route.objects.create(
                 vrf=vrf, destination=destination, nexthop=nexthop or None,
-                defaults={
-                    "interface": interface,
-                    "protocol": protocol if protocol in dict(Route.PROTOCOL_CHOICES) else "other",
-                    "metric": int(metric) if metric else 0,
-                },
+                interface=interface,
+                protocol=protocol if protocol in dict(Route.PROTOCOL_CHOICES) else "other",
+                metric=int(metric) if metric else 0,
             )
-            created += 1 if is_created else 0
-            updated += 0 if is_created else 1
+            created += 1
         except Exception as e:
             errors.append(str(e))
 
     return Response({
-        "success": True,
-        "device": device.hostname,
-        "template": template_name,
-        "total_routes": len(routes_data),
-        "created": created,
-        "updated": updated,
-        "errors": errors,
+        "success": True, "device": device.hostname,
+        "api_url": api_url, "vrf": vrf_name,
+        "deleted": old_count, "created": created, "errors": errors,
     })
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def route_list(request):
-    """路由列表: GET /api/trace/routes/?device_id=&vrf="""
-    from assets.models import Route
-
-    qs = Route.objects.select_related("vrf", "vrf__device").all()
-    device_id = request.query_params.get("device_id")
-    vrf_name = request.query_params.get("vrf")
-    protocol = request.query_params.get("protocol")
-
-    if device_id:
-        qs = qs.filter(vrf__device_id=device_id)
-    if vrf_name:
-        qs = qs.filter(vrf__name=vrf_name)
-    if protocol:
-        qs = qs.filter(protocol=protocol)
-
-    data = [
-        {
-            "id": r.id,
-            "device": r.vrf.device.hostname,
-            "vrf": r.vrf.name,
-            "destination": r.destination,
-            "nexthop": r.nexthop,
-            "interface": r.interface,
-            "protocol": r.protocol,
-            "metric": r.metric,
-        }
-        for r in qs[:500]
-    ]
-    return Response({"routes": data, "total": qs.count()})
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def route_collect_raw(request):
-    """路由采集（直接保存文本）: POST /api/trace/route-collect-raw/
+    """路由采集（直接提交文本）: POST /api/trace/route-collect-raw/
     Body: {"device_id": 1, "raw_text": "...", "vrf_name": "default"}
     """
     device_id = request.data.get("device_id")
@@ -180,12 +164,9 @@ def route_collect_raw(request):
         return Response({"error": f"设备 {device_id} 不存在"}, status=http_status.HTTP_404_NOT_FOUND)
 
     vrf, _ = Vrf.objects.get_or_create(device=device, name=vrf_name)
-
-    # 清空旧路由
     old_count = Route.objects.filter(vrf=vrf).count()
     Route.objects.filter(vrf=vrf).delete()
 
-    # 解析路由文本（简单按行解析）
     import re
     created = 0
     errors = []
@@ -194,16 +175,12 @@ def route_collect_raw(request):
         line = line.strip()
         if not line:
             continue
-
-        # 匹配: CODE destination [pref/metric] via nexthop
-        # 或: CODE destination [pref/metric] is directly connected, interface
         m = re.match(
             r'^[A-Z*]+\s+(\S+)\s+(?:\[\d+/\d+\]\s+)?(?:via\s+(\S+)|is\s+directly\s+connected,\s+(\S+))',
             line
         )
         if not m:
             continue
-
         destination = m.group(1)
         nexthop = m.group(2)
         interface = m.group(3) or ""
@@ -211,21 +188,43 @@ def route_collect_raw(request):
 
         try:
             Route.objects.create(
-                vrf=vrf,
-                destination=destination,
-                nexthop=nexthop if nexthop and nexthop != destination else None,
-                interface=interface,
-                protocol=protocol if protocol in dict(Route.PROTOCOL_CHOICES) else "other",
+                vrf=vrf, destination=destination, nexthop=nexthop if nexthop else None,
+                interface=interface, protocol=protocol,
             )
             created += 1
         except Exception as e:
             errors.append(str(e))
 
     return Response({
-        "success": True,
-        "device": device.hostname,
-        "vrf": vrf_name,
-        "deleted": old_count,
-        "created": created,
-        "errors": errors,
+        "success": True, "device": device.hostname, "vrf": vrf_name,
+        "deleted": old_count, "created": created, "errors": errors,
     })
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def route_list(request):
+    """路由列表: GET /api/trace/routes/?device_id=&vrf=&protocol="""
+    from assets.models import Route
+
+    qs = Route.objects.select_related("vrf", "vrf__device").all()
+    device_id = request.query_params.get("device_id")
+    vrf_name = request.query_params.get("vrf")
+    protocol = request.query_params.get("protocol")
+
+    if device_id:
+        qs = qs.filter(vrf__device_id=device_id)
+    if vrf_name:
+        qs = qs.filter(vrf__name=vrf_name)
+    if protocol:
+        qs = qs.filter(protocol=protocol)
+
+    data = [
+        {
+            "id": r.id, "device": r.vrf.device.hostname, "vrf": r.vrf.name,
+            "destination": r.destination, "nexthop": r.nexthop,
+            "interface": r.interface, "protocol": r.protocol, "metric": r.metric,
+        }
+        for r in qs[:500]
+    ]
+    return Response({"routes": data, "total": qs.count()})
