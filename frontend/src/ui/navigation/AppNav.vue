@@ -121,27 +121,23 @@ const handleLogout = async () => {
   height: 100%;
   padding: 0;
   border-bottom: none;
-  border-right: 1px solid var(--el-border-color-lighter, #e4e7ed);
-  overflow: hidden;
 }
 .app-nav.vertical :deep(.el-menu) {
   width: 100%;
-  min-width: 160px;
   flex: 1;
   border-right: none;
-  overflow-y: auto;
-  overflow-x: hidden;
 }
 .nav-logo {
   display: flex;
   align-items: center;
+  justify-content: center;
   flex-shrink: 0;
   height: var(--nav-height);
+  box-sizing: border-box;
 }
 .app-nav:not(.vertical) .nav-logo { margin-right: 32px; }
 .app-nav.vertical .nav-logo {
   width: 100%;
-  justify-content: center;
   border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
 }
 .logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary, #303133); }
@@ -151,19 +147,13 @@ const handleLogout = async () => {
   align-items: center;
   gap: 8px;
 }
-.app-nav.vertical .nav-actions {
-  margin-left: 0;
-  margin-top: auto;
-  width: 100%;
-  justify-content: center;
-  padding: 8px;
-  border-top: 1px solid var(--el-border-color-lighter, #e4e7ed);
-}
 .nav-user { font-size: 14px; color: var(--el-text-color-secondary, #909399); }
 :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); }
-:deep(.el-menu-item), :deep(.el-sub-menu__title) { height: var(--nav-height); line-height: var(--nav-height); min-width: 0; }
+:deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; }
+:deep(.el-sub-menu) { height: var(--nav-height); }
+:deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; }
 .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
-:deep(.el-sub-menu) { position: relative; }
-:deep(.el-menu--popup) { min-width: 160px; z-index: 2001; }
+:deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light, #f5f7fa); }
+:deep(.el-menu-item.is-active) { color: var(--el-color-primary, #409eff); }
 .menu-icon { margin-right: 4px; }
 </style>
