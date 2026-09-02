@@ -136,12 +136,12 @@ const handleMenuSelect = (index: string) => {
 }
 .logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary); }
 .logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
-:deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); }
-:deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; }
-:deep(.el-sub-menu) { height: var(--nav-height); }
-:deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; }
-.app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
-:deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); }
-:deep(.el-menu-item.is-active) { color: var(--el-color-primary); }
+/* :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); } */
+/* :deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; } */
+/* :deep(.el-sub-menu) { height: var(--nav-height); } */
+/* :deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; } */
+/* .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; } */
+/* :deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); } */
+/* :deep(.el-menu-item.is-active) { color: var(--el-color-primary); } */
 
 </style>
