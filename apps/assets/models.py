@@ -1,4 +1,5 @@
 import re
+from typing import TYPE_CHECKING
 
 from django.db import models
 
@@ -608,6 +609,10 @@ class GtmPool(ConfigBase):
 
 
 class AddressBook(ConfigBase):
+    if TYPE_CHECKING:
+        from django.db.models import Manager
+
+        children: Manager["AddressBook"]
     """地址簿"""
 
     ADDRESS_TYPE_CHOICES = (
