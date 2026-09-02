@@ -227,6 +227,14 @@ class DeviceConnection(models.Model):
     def __str__(self):
         return f"{self.device.hostname} ({self.connection_type})"
 
+    def get_address(self) -> str:
+        """获取连接地址（优先级：连接地址 > 设备地址）"""
+        if self.address:
+            return self.address
+        if self.device:
+            return self.device.hostname
+        return ""
+
 
 class DeviceConfig(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="configs", verbose_name="关联设备")
@@ -835,9 +843,14 @@ class IPAddress(models.Model):
 
 class Route(models.Model):
     """路由"""
+
     PROTOCOL_CHOICES = (
-        ("static", "静态"), ("connected", "直连"), ("ospf", "OSPF"),
-        ("bgp", "BGP"), ("rip", "RIP"), ("other", "其他"),
+        ("static", "静态"),
+        ("connected", "直连"),
+        ("ospf", "OSPF"),
+        ("bgp", "BGP"),
+        ("rip", "RIP"),
+        ("other", "其他"),
     )
 
     vrf = models.ForeignKey(Vrf, on_delete=models.CASCADE, related_name="routes", verbose_name="VRF")
@@ -852,9 +865,7 @@ class Route(models.Model):
     class Meta:
         verbose_name = "路由"
         verbose_name_plural = verbose_name
-        constraints = (
-            models.UniqueConstraint(fields=["vrf", "destination", "nexthop"], name="uni_route_vrf_dst_nh"),
-        )
+        constraints = (models.UniqueConstraint(fields=["vrf", "destination", "nexthop"], name="uni_route_vrf_dst_nh"),)
 
     def __str__(self):
         return f"{self.destination} → {self.nexthop or self.interface}"

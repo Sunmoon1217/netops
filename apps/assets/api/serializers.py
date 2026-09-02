@@ -33,8 +33,7 @@ class DataCenterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DataCenter
-        fields = ("id", "name", "address", "contact", "phone", "remark",
-                  "room_count", "cabinet_count", "created_at")
+        fields = ("id", "name", "address", "contact", "phone", "remark", "room_count", "cabinet_count", "created_at")
         read_only_fields = ("id", "created_at")
 
     def get_cabinet_count(self, obj) -> int:
@@ -47,8 +46,7 @@ class RoomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Room
-        fields = ("id", "name", "datacenter", "datacenter_name", "contact",
-                  "remark", "cabinet_count", "created_at")
+        fields = ("id", "name", "datacenter", "datacenter_name", "contact", "remark", "cabinet_count", "created_at")
         read_only_fields = ("id", "created_at")
 
 
@@ -58,8 +56,19 @@ class CabinetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cabinet
-        fields = ("id", "name", "row", "room", "room_name", "datacenter_name",
-                  "total_u", "power_capacity", "status", "remark", "created_at")
+        fields = (
+            "id",
+            "name",
+            "row",
+            "room",
+            "room_name",
+            "datacenter_name",
+            "total_u",
+            "power_capacity",
+            "status",
+            "remark",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -94,10 +103,26 @@ class DeviceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Device
-        fields = ("id", "hostname", "device_type", "device_type_display", "device_model",
-                  "device_model_name", "idc", "idc_name", "cabinet", "cabinet_name",
-                  "room_name", "security_zone", "security_zone_name", "u_position",
-                  "height", "ip_address", "remark", "created_at")
+        fields = (
+            "id",
+            "hostname",
+            "device_type",
+            "device_type_display",
+            "device_model",
+            "device_model_name",
+            "idc",
+            "idc_name",
+            "cabinet",
+            "cabinet_name",
+            "room_name",
+            "security_zone",
+            "security_zone_name",
+            "u_position",
+            "height",
+            "ip_address",
+            "remark",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -106,8 +131,7 @@ class DeviceConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceConfig
-        fields = ("id", "device", "device_name", "git_commit_hash", "config_json",
-                  "parse_duration", "collected_at")
+        fields = ("id", "device", "device_name", "git_commit_hash", "config_json", "parse_duration", "collected_at")
         read_only_fields = ("id", "collected_at")
 
 
@@ -116,8 +140,19 @@ class DeviceConnectionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceConnection
-        fields = ("id", "device", "device_name", "address", "connection_type",
-                  "driver", "port", "account_type", "username", "enabled", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_name",
+            "address",
+            "connection_type",
+            "driver",
+            "port",
+            "account_type",
+            "username",
+            "enabled",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
         extra_kwargs = {"password": {"write_only": True}}
 
@@ -144,9 +179,24 @@ class InterfaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Interface
-        fields = ("id", "device", "device_hostname", "interface", "description", "enabled",
-                  "mode", "vlans", "vrf", "vrf_name", "type", "combo_type",
-                  "ip_address", "subnet_mask", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "interface",
+            "description",
+            "enabled",
+            "mode",
+            "vlans",
+            "vrf",
+            "vrf_name",
+            "type",
+            "combo_type",
+            "ip_address",
+            "subnet_mask",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -155,8 +205,18 @@ class DeviceAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = DeviceAccount
-        fields = ("id", "device", "device_hostname", "username", "auth_type",
-                  "privilege", "enabled", "description", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "username",
+            "auth_type",
+            "privilege",
+            "enabled",
+            "description",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -165,9 +225,20 @@ class SnmpConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SnmpConfig
-        fields = ("id", "device", "device_hostname", "version", "community_read",
-                  "community_write", "port", "trap_enabled", "trap_server", "trap_port",
-                  "enabled", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "version",
+            "community_read",
+            "community_write",
+            "port",
+            "trap_enabled",
+            "trap_server",
+            "trap_port",
+            "enabled",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -176,8 +247,18 @@ class NtpConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NtpConfig
-        fields = ("id", "device", "device_hostname", "server1", "server2", "server3",
-                  "timezone", "sync_interval", "enabled", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "server1",
+            "server2",
+            "server3",
+            "timezone",
+            "sync_interval",
+            "enabled",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -186,8 +267,18 @@ class SyslogConfigSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SyslogConfig
-        fields = ("id", "device", "device_hostname", "server1", "server2", "port",
-                  "facility", "level", "enabled", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "server1",
+            "server2",
+            "port",
+            "facility",
+            "level",
+            "enabled",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -195,15 +286,31 @@ class SyslogConfigSerializer(serializers.ModelSerializer):
 # SLB (LTM) Serializers
 # ---------------------------------------------------------------------------
 
+
 class LtmVirtualServerSerializer(serializers.ModelSerializer):
     device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
 
     class Meta:
         from assets.models import LtmVirtualServer
+
         model = LtmVirtualServer
-        fields = ("id", "device", "device_hostname", "name", "vs_address", "vs_port",
-                  "mask", "protocol", "pool", "snat_type", "persist", "profiles", "rules",
-                  "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "name",
+            "vs_address",
+            "vs_port",
+            "mask",
+            "protocol",
+            "pool",
+            "snat_type",
+            "persist",
+            "profiles",
+            "rules",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -212,6 +319,7 @@ class LtmPoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import LtmPool
+
         model = LtmPool
         fields = ("id", "device", "device_hostname", "name", "mode", "monitors", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -220,6 +328,7 @@ class LtmPoolSerializer(serializers.ModelSerializer):
 class LtmPoolMemberSerializer(serializers.ModelSerializer):
     class Meta:
         from assets.models import LtmPoolMember
+
         model = LtmPoolMember
         fields = ("id", "pool_name", "name", "address")
         read_only_fields = ("id",)
@@ -230,6 +339,7 @@ class LtmProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import LtmProfile
+
         model = LtmProfile
         fields = ("id", "device", "device_hostname", "name", "type", "raw", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -240,6 +350,7 @@ class LtmIRuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import LtmIRule
+
         model = LtmIRule
         fields = ("id", "device", "device_hostname", "name", "raw", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -250,6 +361,7 @@ class LtmSNATSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import LtmSNAT
+
         model = LtmSNAT
         fields = ("id", "device", "device_hostname", "name", "address", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -260,6 +372,7 @@ class LtmPersistSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import LtmPersist
+
         model = LtmPersist
         fields = ("id", "device", "device_hostname", "name", "type", "raw", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -269,11 +382,13 @@ class LtmPersistSerializer(serializers.ModelSerializer):
 # GSLB (GTM) Serializers
 # ---------------------------------------------------------------------------
 
+
 class GtmDatacenterSerializer(serializers.ModelSerializer):
     device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
 
     class Meta:
         from assets.models import GtmDatacenter
+
         model = GtmDatacenter
         fields = ("id", "device", "device_hostname", "name", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
@@ -284,9 +399,9 @@ class GtmWideipSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import GtmWideip
+
         model = GtmWideip
-        fields = ("id", "device", "device_hostname", "name", "rtype", "lb_mode", "pools",
-                  "is_active", "created_at")
+        fields = ("id", "device", "device_hostname", "name", "rtype", "lb_mode", "pools", "is_active", "created_at")
         read_only_fields = ("id", "created_at")
 
 
@@ -295,10 +410,23 @@ class GtmPoolSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import GtmPool
+
         model = GtmPool
-        fields = ("id", "device", "device_hostname", "name", "lb_mode", "alternate_mode",
-                  "fallback_mode", "fallback_ip", "ttl", "members", "monitor",
-                  "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "name",
+            "lb_mode",
+            "alternate_mode",
+            "fallback_mode",
+            "fallback_ip",
+            "ttl",
+            "members",
+            "monitor",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -306,16 +434,31 @@ class GtmPoolSerializer(serializers.ModelSerializer):
 # Firewall Policy Serializers
 # ---------------------------------------------------------------------------
 
+
 class AddressBookSerializer(serializers.ModelSerializer):
     device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
     parent_name = serializers.CharField(source="parent.name", read_only=True, default="")
 
     class Meta:
         from assets.models import AddressBook
+
         model = AddressBook
-        fields = ("id", "device", "device_hostname", "name", "address_type",
-                  "ip_address", "ip_netmask", "ip_start", "ip_end",
-                  "parent", "parent_name", "description", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "name",
+            "address_type",
+            "ip_address",
+            "ip_netmask",
+            "ip_start",
+            "ip_end",
+            "parent",
+            "parent_name",
+            "description",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -324,9 +467,20 @@ class ServiceSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import Service
+
         model = Service
-        fields = ("id", "device", "device_hostname", "name", "protocol", "port", "port2",
-                  "description", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "name",
+            "protocol",
+            "port",
+            "port2",
+            "description",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -335,10 +489,25 @@ class PolicySerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import Policy
+
         model = Policy
-        fields = ("id", "device", "device_hostname", "policy_id", "order", "name", "action",
-                  "enabled", "source_addresses", "destination_addresses", "services",
-                  "log", "description", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "policy_id",
+            "order",
+            "name",
+            "action",
+            "enabled",
+            "source_addresses",
+            "destination_addresses",
+            "services",
+            "log",
+            "description",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -347,11 +516,26 @@ class NatRuleSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import NatRule
+
         model = NatRule
-        fields = ("id", "device", "device_hostname", "order", "name", "nat_type", "enabled",
-                  "source_addresses", "destination_addresses", "services",
-                  "translated_source", "translated_destination", "translated_service",
-                  "description", "is_active", "created_at")
+        fields = (
+            "id",
+            "device",
+            "device_hostname",
+            "order",
+            "name",
+            "nat_type",
+            "enabled",
+            "source_addresses",
+            "destination_addresses",
+            "services",
+            "translated_source",
+            "translated_destination",
+            "translated_service",
+            "description",
+            "is_active",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -359,11 +543,13 @@ class NatRuleSerializer(serializers.ModelSerializer):
 # IPAM Serializers
 # ---------------------------------------------------------------------------
 
+
 class TagSerializer(serializers.ModelSerializer):
     subnet_count = serializers.IntegerField(source="subnets.count", read_only=True)
 
     class Meta:
         from assets.models import Tag
+
         model = Tag
         fields = ("id", "name", "color", "subnet_count", "created_at")
         read_only_fields = ("id", "created_at")
@@ -378,10 +564,26 @@ class SubnetSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import Subnet
+
         model = Subnet
-        fields = ("id", "network", "tags", "tag_names", "parent", "gateway", "vlan",
-                  "datacenter", "security_zone", "vrf", "description",
-                  "ip_count", "total_ips", "used_ips", "utilization", "created_at")
+        fields = (
+            "id",
+            "network",
+            "tags",
+            "tag_names",
+            "parent",
+            "gateway",
+            "vlan",
+            "datacenter",
+            "security_zone",
+            "vrf",
+            "description",
+            "ip_count",
+            "total_ips",
+            "used_ips",
+            "utilization",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
     def get_tag_names(self, obj):
@@ -395,9 +597,22 @@ class IPAddressSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import IPAddress
+
         model = IPAddress
-        fields = ("id", "ip_address", "subnet", "subnet_network", "security_zone", "security_zone_name",
-                  "status", "device", "device_hostname", "interface", "description", "created_at")
+        fields = (
+            "id",
+            "ip_address",
+            "subnet",
+            "subnet_network",
+            "security_zone",
+            "security_zone_name",
+            "status",
+            "device",
+            "device_hostname",
+            "interface",
+            "description",
+            "created_at",
+        )
         read_only_fields = ("id", "created_at")
 
 
@@ -407,7 +622,21 @@ class RouteSerializer(serializers.ModelSerializer):
 
     class Meta:
         from assets.models import Route
+
         model = Route
-        fields = ("id", "vrf", "vrf_name", "device_hostname", "destination", "nexthop",
-                  "interface", "protocol", "metric", "enabled", "description")
+        fields = (
+            "id",
+            "vrf",
+            "vrf_name",
+            "device_hostname",
+            "destination",
+            "nexthop",
+            "interface",
+            "protocol",
+            "metric",
+            "enabled",
+            "description",
+        )
         read_only_fields = ("id",)
+
+
