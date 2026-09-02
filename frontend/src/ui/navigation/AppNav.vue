@@ -83,6 +83,7 @@ const handleMenuSelect = (index: string) => {
       :collapse="isVertical && isCollapsed"
       unique-opened
       :collapse-transition="true"
+      :ellipsis="false"
       class="app-menu"
       @select="handleMenuSelect"
     >
