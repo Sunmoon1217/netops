@@ -75,6 +75,7 @@ const handleMenuSelect = (index: string) => {
       :collapse="isVertical && isCollapsed"
       unique-opened
       :collapse-transition="true"
+      :accordion="isVertical"
       class="app-menu"
       @select="handleMenuSelect"
     >
