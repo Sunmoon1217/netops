@@ -881,3 +881,24 @@ class IPAddressViewSet(viewsets.ModelViewSet):
         if device_id:
             qs = qs.filter(device_id=device_id)
         return qs
+
+
+class RouteViewSet(viewsets.ModelViewSet):
+    from assets.models import Route
+
+    from .serializers import RouteSerializer
+    queryset = Route.objects.select_related("vrf", "vrf__device").all()
+    serializer_class = RouteSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("destination", "nexthop", "vrf__name", "vrf__device__hostname")
+    ordering_fields = ("destination", "protocol", "metric")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(vrf__device_id=device_id)
+        protocol = self.request.query_params.get("protocol")
+        if protocol:
+            qs = qs.filter(protocol=protocol)
+        return qs

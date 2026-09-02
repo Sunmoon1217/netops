@@ -1,0 +1,10 @@
+<group name="routes">
+<group name="route">
+{{ protocol }}
+{{ destination }}
+{{ preference }}
+{{ metric }}
+{{ nexthop }}
+{{ interface }}
+</group>
+</group>

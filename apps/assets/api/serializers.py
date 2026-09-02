@@ -399,3 +399,15 @@ class IPAddressSerializer(serializers.ModelSerializer):
         fields = ("id", "ip_address", "subnet", "subnet_network", "security_zone", "security_zone_name",
                   "status", "device", "device_hostname", "interface", "description", "created_at")
         read_only_fields = ("id", "created_at")
+
+
+class RouteSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="vrf.device.hostname", read_only=True, default="")
+    vrf_name = serializers.CharField(source="vrf.name", read_only=True, default="")
+
+    class Meta:
+        from assets.models import Route
+        model = Route
+        fields = ("id", "vrf", "vrf_name", "device_hostname", "destination", "nexthop",
+                  "interface", "protocol", "metric", "enabled", "description")
+        read_only_fields = ("id",)
