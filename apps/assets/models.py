@@ -898,3 +898,47 @@ class Topology(models.Model):
 
     def __str__(self):
         return self.name
+
+
+# ---------------------------------------------------------------------------
+# ARP/MAC 表
+# ---------------------------------------------------------------------------
+
+
+class ArpMac(models.Model):
+    """ARP/MAC 地址表"""
+
+    ARP_TYPE_CHOICES = (
+        ("dynamic", "动态"),
+        ("static", "静态"),
+    )
+    STATUS_CHOICES = (
+        ("normal", "正常"),
+        ("aging", "老化中"),
+        ("conflict", "冲突"),
+    )
+
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="arp_mac_entries", verbose_name="设备")
+    vlan = models.CharField(max_length=50, blank=True, default="", verbose_name="VLAN")
+    interface = models.CharField(max_length=255, blank=True, default="", verbose_name="接口")
+    ip_address = models.GenericIPAddressField(verbose_name="IP 地址")
+    mac_address = models.CharField(max_length=17, verbose_name="MAC 地址")
+    vendor = models.CharField(max_length=100, blank=True, default="", verbose_name="厂商")
+    arp_type = models.CharField(max_length=20, choices=ARP_TYPE_CHOICES, default="dynamic", verbose_name="ARP 类型")
+    learned_at = models.DateTimeField(null=True, blank=True, verbose_name="学习时间")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="normal", verbose_name="状态")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "ARP/MAC"
+        verbose_name_plural = verbose_name
+        ordering = ("-updated_at",)
+        constraints = (
+            models.UniqueConstraint(
+                fields=["device", "ip_address", "mac_address"], name="uni_arpmac_device_ip_mac"
+            ),
+        )
+
+    def __str__(self):
+        return f"{self.ip_address} → {self.mac_address}"

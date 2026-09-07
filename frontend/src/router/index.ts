@@ -49,6 +49,7 @@ const router = createRouter({
         { path: 'gslb', name: 'config-gslb', component: () => import('@/views/config/lb/gslb.vue') },
         { path: 'firewall', name: 'config-firewall', component: () => import('@/views/config/firewall/firewall.vue') },
         { path: 'routing-table', name: 'config-routing-table', component: () => import('@/views/config/network/routing-table.vue') },
+        { path: 'arp-mac', name: 'config-arp-mac', component: () => import('@/views/config/network/arp-mac.vue') },
         { path: 'policy', name: 'config-policy', component: () => import('@/views/config/firewall/policy.vue') },
       ],
     },

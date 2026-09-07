@@ -52,6 +52,7 @@ router.register(r"nat-rules", views.NatRuleViewSet, basename="nat-rule")
 # Routing
 router.register(r"routes", views.RouteViewSet, basename="route")
 router.register(r"topologies", views.TopologyViewSet, basename="topology")
+router.register(r"arp-mac", views.ArpMacViewSet, basename="arp-mac")
 
 # IPAM
 router.register(r"tags", views.TagViewSet, basename="tag")
