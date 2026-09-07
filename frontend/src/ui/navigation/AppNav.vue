@@ -15,9 +15,7 @@ const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
 const authStore = useAuthStore()
-
-const isVertical = computed(() => layoutStore.mode === 'side')
-const isCollapsed = computed(() => layoutStore.collapsed)
+const collapsed = computed(() => layoutStore.collapsed)
 
 const renderIcon = (icon: Component) => {
   return () => h(ElIcon, null, { default: () => h(icon) })
@@ -78,19 +76,17 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div class="app-nav" :class="{ vertical: isVertical, collapsed: isVertical && isCollapsed }">
+  <div class="app-nav">
     <div class="nav-logo">
-      <span v-if="!isVertical || !isCollapsed" class="logo-text"><strong>Network Ops</strong></span>
+      <span v-if="!collapsed" class="logo-text"><strong>Network Ops</strong></span>
       <span v-else class="logo-icon"><strong>N</strong></span>
     </div>
 
     <el-menu
-      :mode="isVertical ? 'vertical' : 'horizontal'"
+      mode="vertical"
       :default-active="route.path"
-      :collapse="isVertical && isCollapsed"
+      :collapse="collapsed"
       unique-opened
-      :collapse-transition="true"
-      :ellipsis="false"
       class="app-menu"
       @select="handleMenuSelect"
     >
@@ -112,15 +108,15 @@ const handleLogout = async () => {
       </template>
     </el-menu>
 
-    <!-- 横向导航：右侧用户区 -->
-    <div v-if="!isVertical" class="nav-right">
-      <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
-      <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
+    <!-- 底部收起箭头 -->
+    <div class="nav-collapse" @click="layoutStore.toggleCollapsed">
+      <span v-if="collapsed">▶</span>
+      <span v-else>◀</span>
     </div>
 
-    <!-- 纵向导航：底部用户区 -->
-    <div v-if="isVertical" class="nav-user-bottom">
-      <template v-if="!isCollapsed">
+    <!-- 底部用户区 -->
+    <div class="nav-user">
+      <template v-if="!collapsed">
         <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
         <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
       </template>
@@ -131,25 +127,15 @@ const handleLogout = async () => {
   </div>
 </template>
 
-<style lang="css" scoped>
+<style scoped>
 .app-nav {
-  --nav-height: 3rem;
   display: flex;
-  align-items: center;
-  width: 100%;
-  height: var(--nav-height);
-  padding: 0 1.25rem;
-  box-sizing: border-box;
-  background: var(--el-fill-color-blank);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-.app-nav.vertical {
   flex-direction: column;
   height: 100%;
   padding: 0;
   border-bottom: none;
 }
-.app-nav.vertical :deep(.el-menu) {
+.app-nav :deep(.el-menu) {
   width: 100%;
   flex: 1;
   border-right: none;
@@ -158,36 +144,33 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  height: var(--nav-height);
-  box-sizing: border-box;
-}
-.app-nav:not(.vertical) .nav-logo { margin-right: 32px; }
-.app-nav.vertical .nav-logo {
-  width: 100%;
+  height: 48px;
   border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
 }
-.logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary); }
+.logo-text { font-size: 1rem; font-weight: 600; color: var(--el-text-color-primary); }
 .logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
-.nav-right {
+.nav-collapse {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-left: auto;
+  justify-content: center;
+  height: 36px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
   flex-shrink: 0;
+  user-select: none;
 }
-.nav-user-bottom {
-  width: 100%;
+.nav-collapse:hover { background: var(--el-fill-color-light); }
+.nav-user {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 8px;
   border-top: 1px solid var(--el-border-color-lighter);
   flex-shrink: 0;
 }
-.nav-username {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-}
+.nav-username { font-size: 13px; color: var(--el-text-color-secondary); }
 </style>
