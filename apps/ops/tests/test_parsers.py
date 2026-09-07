@@ -41,10 +41,7 @@ class ParserRegistryTest(TestCase):
         for vendor, device_type in REGISTERED_PARSERS:
             with self.subTest(vendor=vendor, device_type=device_type):
                 parser = ParserFactory.get_parser_by_keys(vendor, device_type)
-                found = any(
-                    (tmpls_dir / subdir / parser.template_name).exists()
-                    for subdir in ("configs", "running")
-                )
+                found = any((tmpls_dir / subdir / parser.template_name).exists() for subdir in ("configs", "running"))
                 self.assertTrue(found, f"模板不存在: {parser.template_name}")
 
     def test_vendor_aliases(self):
