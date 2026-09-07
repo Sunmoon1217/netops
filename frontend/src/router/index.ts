@@ -76,6 +76,7 @@ const router = createRouter({
       children: [
         { path: '', redirect: '/tools/path-trace' },
         { path: 'path-trace', name: 'tools-path-trace', component: () => import('@/views/tools/path-trace.vue') },
+        { path: 'rack-view', name: 'tools-rack-view', component: () => import('@/views/tools/rack-view.vue') },
       ],
     },
   ],
