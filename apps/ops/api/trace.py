@@ -4,7 +4,7 @@ import logging
 import requests
 from rest_framework import status as http_status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def path_trace(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def route_collect(request):
     """路由采集: 从外部服务获取路由表，TTP 解析后保存
 
@@ -144,7 +144,7 @@ def route_collect(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def route_collect_raw(request):
     """路由采集（直接提交文本）: POST /api/trace/route-collect-raw/
     Body: {"device_id": 1, "raw_text": "...", "vrf_name": "default"}

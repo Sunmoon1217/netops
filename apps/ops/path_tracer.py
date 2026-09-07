@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 from assets.models import (
     AddressBook,
     Device,
-    DeviceConnection,
     Interface,
     LtmPoolMember,
     LtmVirtualServer,
@@ -122,6 +121,19 @@ def _match_service(port_str: str, services) -> bool:
     return False
 
 
+def _subnet_cache() -> list:
+    """加载所有子网（同一请求内缓存）"""
+    if not hasattr(_subnet_cache, "_data"):
+        _subnet_cache._data = list(Subnet.objects.all())
+    return _subnet_cache._data
+
+
+def _clear_subnet_cache():
+    """清除子网缓存（测试用）"""
+    if hasattr(_subnet_cache, "_data"):
+        delattr(_subnet_cache, "_data")
+
+
 def _find_subnet_for_ip(ip_str: str) -> Subnet | None:
     """查找IP所属子网"""
     try:
@@ -130,7 +142,7 @@ def _find_subnet_for_ip(ip_str: str) -> Subnet | None:
         return None
 
     best_match, best_prefix = None, -1
-    for subnet in Subnet.objects.all():
+    for subnet in _subnet_cache():
         try:
             network = ipaddress.ip_network(subnet.network, strict=False)
             if ip in network and network.prefixlen > best_prefix:
@@ -331,8 +343,23 @@ def _find_vrf_from_dedicated_line(subnet) -> str:
     return "未知合作方"
 
 
+def _route_cache(vrf_id: int) -> list[Route]:
+    """按VRF缓存路由表"""
+    cache_key = f"_routes_{vrf_id}"
+    if not hasattr(_route_cache, cache_key):
+        setattr(_route_cache, cache_key, list(Route.objects.filter(vrf_id=vrf_id, enabled=True)))
+    return getattr(_route_cache, cache_key)
+
+
+def _clear_route_cache():
+    """清除路由缓存（测试用）"""
+    keys = [k for k in dir(_route_cache) if k.startswith("_routes_")]
+    for k in keys:
+        delattr(_route_cache, k)
+
+
 def _find_best_route(device: Device, dst_ip: str, vrf_name: str = "default") -> tuple[Route | None, str]:
-    """在VRF中查找最精确路由"""
+    """在VRF中查找最精确路由（使用缓存）"""
     try:
         dst = ipaddress.ip_address(dst_ip)
     except ValueError:
@@ -343,7 +370,7 @@ def _find_best_route(device: Device, dst_ip: str, vrf_name: str = "default") -> 
         return None, vrf_name
 
     best_route, best_prefix = None, -1
-    for route in Route.objects.filter(vrf=vrf, enabled=True):
+    for route in _route_cache(vrf.pk):
         try:
             network = ipaddress.ip_network(route.destination, strict=False)
             if dst in network and network.prefixlen > best_prefix:
@@ -450,6 +477,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
     """
     result = TraceResult(final_src=src_ip, final_dst=dst_ip, final_port=dst_port)
     max_hops = min(max_hops, MAX_HOPS)
+    _clear_route_cache()
+    has_port = bool(dst_port)
 
     current_src, current_dst, current_port = src_ip, dst_ip, dst_port
     original_src = src_ip  # 原始源IP用于策略匹配
@@ -504,6 +533,11 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
         )
         return result
 
+    # 无端口时，外网源地址必须指定目的端口
+    if not has_port and src_vrf == "internet":
+        result.error = "请输入目的端口"
+        return result
+
     # 使用源VRF开始追踪
     vrf_name = src_vrf
 
@@ -518,9 +552,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
         # 1. 获取设备信息
         device_addr = ""
         if hop_count > 0:
-            conn = DeviceConnection.objects.filter(device=src_device).first()
-            if conn:
-                device_addr = conn.get_address()
+            conn_intf = Interface.objects.filter(device=src_device, ip_address__isnull=False).first()
+            device_addr = conn_intf.ip_address if conn_intf else ""
 
         subnet = _find_subnet_for_ip(current_src if hop_count == 0 else device_addr)
         zone = (subnet.security_zone.name if subnet and subnet.security_zone else "") or (
@@ -538,8 +571,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
             port_before=current_port,
         )
 
-        # 2. LB设备检查
-        if src_device.device_type == "loadbalancer":
+        # 2. LB设备检查（无端口时跳过后端查询）
+        if has_port and src_device.device_type == "loadbalancer":
             lb_backends = _find_lb_backend(current_dst, current_port)
             if lb_backends:
                 hop.matched_vs = {
@@ -556,8 +589,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
                 result.lb_backend = lb_backends
                 return result
 
-        # 3. 防火墙策略匹配
-        if src_device.device_type == "firewall":
+        # 3. 防火墙策略匹配（无端口时跳过）
+        if has_port and src_device.device_type == "firewall":
             policy = _match_policy(original_src, current_dst, current_port, src_device)
             if policy:
                 hop.matched_policy = policy
@@ -573,8 +606,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
                     )
                     return result
 
-        # 4. NAT匹配
-        nat = _match_nat(current_src, current_dst, current_port, src_device)
+        # 4. NAT匹配（无端口时跳过）
+        nat = _match_nat(current_src, current_dst, current_port, src_device) if has_port else None
         if nat:
             hop.matched_nat = nat
             if nat["nat_type"] == "snat" and "translated_source" in nat:
@@ -613,21 +646,8 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
             "protocol": route.protocol,
         }
 
-        # 6. 直连路由 → 结束
-        if route.interface and not route.nexthop:
-            result.hops.append(hop)
-            result.final_src, result.final_dst, result.final_port = (
-                current_src,
-                current_dst,
-                current_port,
-            )
-            break
-
-        # 7. 更新VRF
-        if current_vrf != "default":
-            vrf_name = current_vrf
-
-        # 8. 查找下一跳
+        # 6. 直连路由 → 尝试通过出接口查找下一跳设备
+        next_device = None
         if route.nexthop and _is_ip_address(route.nexthop):
             next_device = _find_device_for_ip(route.nexthop)
             current_src = route.nexthop
@@ -637,22 +657,26 @@ def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
                 conn_intf = Interface.objects.filter(device=src_device, interface=route.interface).first()
                 if conn_intf and conn_intf.ip_address:
                     current_src = conn_intf.ip_address
-        else:
-            result.hops.append(hop)
-            break
 
         if not next_device:
             result.hops.append(hop)
+            result.final_src, result.final_dst, result.final_port = (
+                current_src,
+                current_dst,
+                current_port,
+            )
             break
 
-        # 9. 跳转
+        # 7. 更新VRF（使用接收接口VRF，避免被覆盖）
+        recv_intf_vrf = Interface.objects.filter(device=next_device, ip_address=route.nexthop).first()
+        if recv_intf_vrf and recv_intf_vrf.vrf:
+            vrf_name = recv_intf_vrf.vrf
+        elif current_vrf != "default":
+            vrf_name = current_vrf
+
+        # 8. 跳转
         result.hops.append(hop)
         src_device = next_device
-
-        # 10. 根据接收接口确定VRF
-        recv_intf = Interface.objects.filter(device=src_device, ip_address=route.nexthop).first()
-        if recv_intf and recv_intf.vrf:
-            vrf_name = recv_intf.vrf
 
     result.final_src = current_src
     result.final_dst = current_dst

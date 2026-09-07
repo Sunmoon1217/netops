@@ -48,8 +48,8 @@ export function usePathTrace() {
   const error = ref('')
 
   async function handleTrace() {
-    if (!srcIp.value || !dstIp.value || !dstPort.value) {
-      error.value = '请输入源地址、目的地址和端口'
+    if (!srcIp.value || !dstIp.value) {
+      error.value = '请输入源地址和目的地址'
       return
     }
     loading.value = true

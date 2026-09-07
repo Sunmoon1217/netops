@@ -21,7 +21,7 @@ defineProps<{ result: TraceResult; srcIp: string }>()
 
           <template v-for="(hop, idx) in result.hops" :key="idx">
             <div class="flow-edge">
-              <svg width="60" height="24"><line x1="0" y1="12" x2="50" y2="12" :stroke="actionColor[hop.action] || '#34c8ff'" stroke-width="2" marker-end="url(#arrow)" /><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"><path d="M0 0 L10 5 L0 10z" :fill="actionColor[hop.action] || '#34c8ff'" /></marker></defs></svg>
+              <svg width="60" height="24"><line x1="0" y1="12" x2="50" y2="12" :stroke="actionColor[hop.action] || '#34c8ff'" stroke-width="2" marker-end="`url(#arrow-${idx})`" /><defs><marker :id="`arrow-${idx}`" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"><path d="M0 0 L10 5 L0 10z" :fill="actionColor[hop.action] || '#34c8ff'" /></marker></defs></svg>
             </div>
 
             <div class="flow-node device-node" :style="{ borderLeftColor: actionColor[hop.action] || '#34c8ff' }">
@@ -52,7 +52,7 @@ defineProps<{ result: TraceResult; srcIp: string }>()
 
           <template v-if="!result.blocked && result.hops.length > 0">
             <div class="flow-edge">
-              <svg width="60" height="24"><line x1="0" y1="12" x2="50" y2="12" stroke="#18a058" stroke-width="2" marker-end="url(#arrow)" /><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"><path d="M0 0 L10 5 L0 10z" fill="#18a058" /></marker></defs></svg>
+              <svg width="60" height="24"><line x1="0" y1="12" x2="50" y2="12" stroke="#18a058" stroke-width="2" marker-end="url(#arrow-dest)" /><defs><marker id="arrow-dest" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8"><path d="M0 0 L10 5 L0 10z" fill="#18a058" /></marker></defs></svg>
             </div>
             <div class="flow-node dest-node">
               <div class="node-label">目的地址</div>
