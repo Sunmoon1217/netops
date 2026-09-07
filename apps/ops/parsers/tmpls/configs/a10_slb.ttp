@@ -9,6 +9,7 @@ slb server {{ name }} {{ address }}
        health-check {{ monitor | ORPHRASE }}
        {{ nocheck | ORPHRASE | equal("no health-check") }}
    </group>
+{{ raw_lines | _line_ | joinmatches("\n") }}
 </group>
 
 <group name="service_groups*">
@@ -19,6 +20,7 @@ slb service-group {{ name }} {{ protocol }}
     member {{ address | re("IPV6") }}.{{ port }}
     member {{ address | re("IPV4") }}:{{ port }}
     </group>
+{{ raw_lines | _line_ | joinmatches("\n") }}
 </group>
 
 <group name="virtual_server*">
@@ -32,4 +34,8 @@ slb virtual-server {{ name }} {{ address }}
       template persist {{ persist_type }} {{ persist_name }}
       template client-ssl {{ ssl_name }}
   </group>
+{{ raw_lines | _line_ | joinmatches("\n") }}
+</group>
+
+<group name="account">
 </group>

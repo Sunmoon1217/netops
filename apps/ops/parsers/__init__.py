@@ -1,4 +1,22 @@
 # 导入厂商解析器以触发 @ParserFactory.register 装饰器
-from .vendor import a10, cisco, f5, h3c, hillstone, huawei
+from ops.parsers.factory import (
+    A10SLBParser,
+    CiscoFWParser,
+    F5GTMParser,
+    F5LTMParser,
+    H3CRouterParser,
+    H3CSwitchParser,
+    HillstoneFWParser,
+    HuaweiSwitchParser,
+)
 
-__all__ = ["a10", "cisco", "f5", "h3c", "hillstone", "huawei"]
+__all__ = [
+    "A10SLBParser",
+    "CiscoFWParser",
+    "F5GTMParser",
+    "F5LTMParser",
+    "H3CSwitchParser",
+    "H3CRouterParser",
+    "HillstoneFWParser",
+    "HuaweiSwitchParser",
+]
