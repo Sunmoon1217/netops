@@ -2,14 +2,16 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-_TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
+_TMPLS_DIR = Path(__file__).resolve().parent / "tmpls"
 
 
 def _get_template_path(template_name: str) -> str:
-    template_path = _TEMPLATES_DIR / template_name
-    if not template_path.exists():
-        raise FileNotFoundError(f"模板文件不存在: {template_path}")
-    return template_path.as_posix()
+    """在 tmpls/configs 和 tmpls/running 中查找模板"""
+    for subdir in ("configs", "running"):
+        path = _TMPLS_DIR / subdir / template_name
+        if path.exists():
+            return path.as_posix()
+    raise FileNotFoundError(f"模板文件不存在: {template_name}")
 
 
 class BaseParser(ABC):

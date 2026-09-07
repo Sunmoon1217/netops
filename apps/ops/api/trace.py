@@ -93,9 +93,14 @@ def route_collect(request):
 
         from ttp import ttp
 
-        templates_dir = Path(__file__).resolve().parent.parent / "parsers" / "templates"
-        template_path = str(templates_dir / f"{template_name}.ttp")
-        if not Path(template_path).exists():
+        tmpls_dir = Path(__file__).resolve().parent.parent / "parsers" / "tmpls"
+        template_path = None
+        for subdir in ("configs", "running"):
+            candidate = tmpls_dir / subdir / f"{template_name}.ttp"
+            if candidate.exists():
+                template_path = str(candidate)
+                break
+        if not template_path:
             return Response({"error": f"模板 {template_name}.ttp 不存在"}, status=http_status.HTTP_400_BAD_REQUEST)
 
         parser = ttp(data=raw_text, template=template_path)

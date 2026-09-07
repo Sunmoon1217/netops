@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from .base import BaseParser
+from ..base import BaseParser
 from .factory import ParserFactory
 
 

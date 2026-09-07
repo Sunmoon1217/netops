@@ -1,8 +1,8 @@
-"""华为配置解析器 - 纯函数，无 Django 依赖。"""
+"""思科配置解析器 - 纯函数，无 Django 依赖。"""
 
 from typing import Any
 
-from .base import BaseParser
+from ..base import BaseParser
 from .factory import ParserFactory
 
 
@@ -13,16 +13,16 @@ def _extract_ttp_result(result: list) -> dict[str, Any]:
     return {}
 
 
-@ParserFactory.register("Huawei", "switch")
-class HuaweiSwitchParser(BaseParser):
-    """华为交换机配置解析器。"""
+@ParserFactory.register("Cisco", "firewall")
+class CiscoFWParser(BaseParser):
+    """思科 ASA 防火墙配置解析器。"""
 
-    template_name = "huawei_switch.ttp"
+    template_name = "cisco_fw.ttp"
 
     def parse(self, raw_text: str) -> dict[str, Any]:
-        """解析华为交换机配置文本。
+        """解析思科 ASA 防火墙配置文本。
 
         Returns:
-            包含 interfaces, vlans, static_routes 等键的字典
+            包含 interfaces, static_routes, acl, nat 等键的字典
         """
         return _extract_ttp_result(self._run_ttp(raw_text))
