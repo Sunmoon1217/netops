@@ -39,6 +39,12 @@ const menuOptions: MenuItem[] = [
     ],
   },
   {
+    index: '/topology', label: '网络拓扑', icon: renderIcon(IconPathTrace),
+    children: [
+      { index: '/topology', label: '拓扑图', icon: renderIcon(IconPathTrace) },
+    ],
+  },
+  {
     index: '/config', label: '配置管理', icon: renderIcon(IconConfig),
     children: [
       { index: '/config/slb', label: '负载均衡', icon: renderIcon(IconLoadBalancer) },
@@ -61,7 +67,6 @@ const menuOptions: MenuItem[] = [
     children: [
       { index: '/tools/path-trace', label: '路径追踪', icon: renderIcon(IconPathTrace) },
       { index: '/tools/rack-view', label: '机柜视图', icon: renderIcon(IconBaseline) },
-      { index: '/tools/topology', label: '网络拓扑', icon: renderIcon(IconPathTrace) },
     ],
   },
 ]

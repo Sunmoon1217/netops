@@ -24,7 +24,7 @@ const selectedNode = ref<any>(null)
 const selectedEdge = ref<any>(null)
 const showNodePopover = ref(false)
 const showEdgePopover = ref(false)
-const popoverAnchor = ref<HTMLElement | null>(null)
+const popoverAnchor = ref<HTMLElement | undefined>(undefined)
 let savedEdgeSnapshot: any = null
 
 // === 加载拓扑列表 ===
@@ -182,7 +182,7 @@ function closePopover() {
   showNodePopover.value = false
   if (popoverAnchor.value) {
     popoverAnchor.value.remove()
-    popoverAnchor.value = null
+    popoverAnchor.value = undefined
   }
   selectedNode.value = null
   savedNodeSnapshot = null
@@ -239,7 +239,7 @@ function closeEdgePopover() {
   showEdgePopover.value = false
   if (popoverAnchor.value) {
     popoverAnchor.value.remove()
-    popoverAnchor.value = null
+    popoverAnchor.value = undefined
   }
   selectedEdge.value = null
   savedEdgeSnapshot = null
