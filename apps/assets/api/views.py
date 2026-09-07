@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from assets.models import (
+    ArpMac,
     AddressBook,
     Cabinet,
     DataCenter,
@@ -190,6 +191,7 @@ def overview(request):
 
         # IPAM
         "subnet_count": Subnet.objects.count(),
+        "arp_mac_count": ArpMac.objects.count(),
         "subnets_by_dc": subnets_by_dc,
         "subnets_by_zone": subnets_by_zone,
     })
