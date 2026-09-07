@@ -874,3 +874,27 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.destination} → {self.nexthop or self.interface}"
+
+
+# ---------------------------------------------------------------------------
+# 网络拓扑
+# ---------------------------------------------------------------------------
+
+
+class Topology(models.Model):
+    """网络拓扑图"""
+
+    name = models.CharField(max_length=100, unique=True, verbose_name="拓扑名称")
+    description = models.TextField(blank=True, default="", verbose_name="描述")
+    graph_data = models.JSONField(default=dict, verbose_name="图数据", help_text="antv/g6 格式 JSON")
+    is_default = models.BooleanField(default=False, verbose_name="默认拓扑")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
+
+    class Meta:
+        verbose_name = "网络拓扑"
+        verbose_name_plural = verbose_name
+        ordering = ("-updated_at",)
+
+    def __str__(self):
+        return self.name

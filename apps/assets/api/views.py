@@ -1044,3 +1044,15 @@ class RouteViewSet(viewsets.ModelViewSet):
         return qs
 
 
+
+
+class TopologyViewSet(viewsets.ModelViewSet):
+    from assets.models import Topology
+
+    from .serializers import TopologySerializer
+
+    queryset = Topology.objects.all()
+    serializer_class = TopologySerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("name", "description")
+    ordering_fields = ("name", "updated_at")

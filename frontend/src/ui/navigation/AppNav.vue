@@ -61,6 +61,7 @@ const menuOptions: MenuItem[] = [
     children: [
       { index: '/tools/path-trace', label: '路径追踪', icon: renderIcon(IconPathTrace) },
       { index: '/tools/rack-view', label: '机柜视图', icon: renderIcon(IconBaseline) },
+      { index: '/tools/topology', label: '网络拓扑', icon: renderIcon(IconPathTrace) },
     ],
   },
 ]

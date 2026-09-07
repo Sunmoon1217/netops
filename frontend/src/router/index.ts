@@ -77,6 +77,7 @@ const router = createRouter({
         { path: '', redirect: '/tools/path-trace' },
         { path: 'path-trace', name: 'tools-path-trace', component: () => import('@/views/tools/path-trace.vue') },
         { path: 'rack-view', name: 'tools-rack-view', component: () => import('@/views/tools/rack-view.vue') },
+        { path: 'topology', name: 'tools-topology', component: () => import('@/views/tools/topology.vue') },
       ],
     },
   ],
