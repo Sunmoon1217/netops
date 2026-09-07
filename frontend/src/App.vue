@@ -3,7 +3,6 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import AppNav from '@/ui/navigation/AppNav.vue'
-import FloatingActions from '@/ui/navigation/FloatingActions.vue'
 import SideLayout from '@/layout/SideLayout.vue'
 import Login from '@/views/login/Login.vue'
 
@@ -14,9 +13,7 @@ const isLoginPage = computed(() => route.path === '/login')
 const isAuthenticated = computed(() => authStore.isAuthenticated)
 
 onMounted(() => {
-  if (authStore.isAuthenticated) {
-    authStore.fetchUser()
-  }
+  if (authStore.isAuthenticated) authStore.fetchUser()
 })
 </script>
 
@@ -27,7 +24,6 @@ onMounted(() => {
     <template #nav><AppNav /></template>
     <template #main><router-view /></template>
   </SideLayout>
-  <FloatingActions v-if="isAuthenticated && !isLoginPage" />
 </template>
 
 <style>

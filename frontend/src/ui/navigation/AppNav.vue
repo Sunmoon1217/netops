@@ -4,17 +4,16 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElIcon } from 'element-plus'
 import type { Component } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
-import { useAuthStore } from '@/stores/auth'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
   IconIp, IconSubnet, IconTools, IconPathTrace, IconRouting,
+  IconLayoutSide,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
-const authStore = useAuthStore()
 const collapsed = computed(() => layoutStore.collapsed)
 
 const renderIcon = (icon: Component) => {
@@ -68,11 +67,6 @@ const menuOptions: MenuItem[] = [
 const handleMenuSelect = (index: string) => {
   if (index.startsWith('/')) router.push(index)
 }
-
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
-}
 </script>
 
 <template>
@@ -108,21 +102,8 @@ const handleLogout = async () => {
       </template>
     </el-menu>
 
-    <!-- 底部收起箭头 -->
     <div class="nav-collapse" @click="layoutStore.toggleCollapsed">
-      <span v-if="collapsed">▶</span>
-      <span v-else>◀</span>
-    </div>
-
-    <!-- 底部用户区 -->
-    <div class="nav-user">
-      <template v-if="!collapsed">
-        <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
-        <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
-      </template>
-      <el-tooltip v-else content="登出" placement="right">
-        <el-button link type="danger" size="small" @click="handleLogout">⏻</el-button>
-      </el-tooltip>
+      <el-icon :class="{ collapsed }" :size="18"><component :is="IconLayoutSide" /></el-icon>
     </div>
   </div>
 </template>
@@ -133,7 +114,6 @@ const handleLogout = async () => {
   flex-direction: column;
   height: 100%;
   padding: 0;
-  border-bottom: none;
 }
 .app-nav :deep(.el-menu) {
   width: 100%;
@@ -144,7 +124,7 @@ const handleLogout = async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 48px;
+  height: 42px;
   border-bottom: 1px solid var(--el-border-color-lighter);
   flex-shrink: 0;
 }
@@ -157,20 +137,9 @@ const handleLogout = async () => {
   height: 36px;
   border-top: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
-  font-size: 12px;
   color: var(--el-text-color-secondary);
   flex-shrink: 0;
-  user-select: none;
 }
 .nav-collapse:hover { background: var(--el-fill-color-light); }
-.nav-user {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 8px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  flex-shrink: 0;
-}
-.nav-username { font-size: 13px; color: var(--el-text-color-secondary); }
+.nav-collapse .collapsed { transform: rotate(180deg); }
 </style>
