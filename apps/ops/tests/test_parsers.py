@@ -37,7 +37,7 @@ class ParserRegistryTest(TestCase):
                 self.assertTrue(parser.template_name, f"{vendor}/{device_type} 未设置 template_name")
 
     def test_all_templates_exist(self):
-        tmpls_dir = Path(__file__).resolve().parent.parent / "apps" / "ops" / "parsers" / "tmpls"
+        tmpls_dir = Path(__file__).resolve().parent.parent / "parsers" / "tmpls"
         for vendor, device_type in REGISTERED_PARSERS:
             with self.subTest(vendor=vendor, device_type=device_type):
                 parser = ParserFactory.get_parser_by_keys(vendor, device_type)
@@ -96,15 +96,15 @@ class TemplateTest(TestCase):
     """模板文件完整性测试"""
 
     def test_configs_dir_exists(self):
-        tmpls_dir = Path(__file__).resolve().parent.parent / "apps" / "ops" / "parsers" / "tmpls"
+        tmpls_dir = Path(__file__).resolve().parent.parent / "parsers" / "tmpls"
         self.assertTrue((tmpls_dir / "configs").is_dir())
 
     def test_running_dir_exists(self):
-        tmpls_dir = Path(__file__).resolve().parent.parent / "apps" / "ops" / "parsers" / "tmpls"
+        tmpls_dir = Path(__file__).resolve().parent.parent / "parsers" / "tmpls"
         self.assertTrue((tmpls_dir / "running").is_dir())
 
     def test_templates_not_empty(self):
-        tmpls_dir = Path(__file__).resolve().parent.parent / "apps" / "ops" / "parsers" / "tmpls"
+        tmpls_dir = Path(__file__).resolve().parent.parent / "parsers" / "tmpls"
         for subdir in ("configs", "running"):
             for ttp_file in (tmpls_dir / subdir).glob("*.ttp"):
                 with self.subTest(template=ttp_file.name):
