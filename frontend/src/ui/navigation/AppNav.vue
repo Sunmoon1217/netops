@@ -4,15 +4,20 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElIcon } from 'element-plus'
 import type { Component } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
+import { useThemeStore } from '@/stores/theme'
+import { useAuthStore } from '@/stores/auth'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
   IconIp, IconSubnet, IconTools, IconPathTrace, IconRouting,
+  IconLayoutTop, IconLayoutSide, IconSun, IconMoon,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
+const themeStore = useThemeStore()
+const authStore = useAuthStore()
 
 const isVertical = computed(() => layoutStore.mode === 'side')
 const isCollapsed = computed(() => layoutStore.collapsed)
@@ -68,6 +73,11 @@ const menuOptions: MenuItem[] = [
 const handleMenuSelect = (index: string) => {
   if (index.startsWith('/')) router.push(index)
 }
+
+const handleLogout = async () => {
+  await authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -104,6 +114,18 @@ const handleMenuSelect = (index: string) => {
         </el-menu-item>
       </template>
     </el-menu>
+
+    <!-- 右侧操作区 -->
+    <div v-if="!isVertical" class="nav-right">
+      <el-tooltip :content="isVertical ? '顶栏布局' : '侧栏布局'" placement="bottom">
+        <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" circle size="small" @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
+      </el-tooltip>
+      <el-tooltip :content="themeStore.isDark ? '亮色模式' : '暗色模式'" placement="bottom">
+        <el-button :icon="themeStore.isDark ? IconMoon : IconSun" circle size="small" @click="themeStore.toggleDark()" />
+      </el-tooltip>
+      <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
+      <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
+    </div>
   </div>
 </template>
 
@@ -145,13 +167,15 @@ const handleMenuSelect = (index: string) => {
 }
 .logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary); }
 .logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
-/* :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); } */
-/* :deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; } */
-/* :deep(.el-sub-menu) { height: var(--nav-height); } */
-/* :deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; } */
-/* .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
-.app-nav:not(.vertical) :deep(.el-sub-menu__title) { white-space: nowrap; } */
-/* :deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); } */
-/* :deep(.el-menu-item.is-active) { color: var(--el-color-primary); } */
-
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.nav-username {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
 </style>
