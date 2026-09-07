@@ -6,64 +6,32 @@ import api from '@/api/index'
 import { ElButton } from 'element-plus'
 import { FixedDir } from 'element-plus/es/components/table-v2/src/constants'
 import ImportDevice from './components/ImportDevice.vue'
+import PageLayout from '@/ui/PageLayout.vue'
+import { useCrudApi } from '@/composables/useCrudApi'
+import { useTableHeight } from '@/composables/useTableHeight'
 
 const router = useRouter()
-const tableRef = ref<HTMLElement | null>(null)
-const tableHeight = ref(600)
-const tableWidth = ref(1200)
+const { tableRef, tableHeight, tableWidth } = useTableHeight()
+const { data: devices, loading, search, filteredData, fetchData, handleSave } = useCrudApi(['hostname', 'ip_address'])
 
-const devices = ref<any[]>([])
-const loading = ref(false)
-const search = ref('')
 const importDialogVisible = ref(false)
 const editDialogVisible = ref(false)
 const editForm = ref<any>(null)
 
-const filteredData = computed(() => {
-  if (!search.value) return devices.value
-  const keyword = search.value.toLowerCase()
-  return devices.value.filter(
-    (item: any) =>
-      item.hostname.toLowerCase().includes(keyword) ||
-      item.ip_address?.toLowerCase().includes(keyword)
-  )
-})
-
-const fetchData = async () => {
-  loading.value = true
-  try {
-    const res = await getDevices()
-    devices.value = res.data.results || res.data || []
-  } catch {
-    ElMessage.error('加载失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const goToConfig = (row: any) => {
-  router.push(`/devices/${row.id}/config`)
-}
-
-const goToHistory = (row: any) => {
-  router.push(`/devices/${row.id}/history`)
-}
+const goToConfig = (row: any) => router.push(`/devices/${row.id}/config`)
+const goToHistory = (row: any) => router.push(`/devices/${row.id}/history`)
 
 const openEdit = (row: any) => {
   editForm.value = { ...row }
   editDialogVisible.value = true
 }
 
-const handleEditSave = async () => {
+const saveEdit = () => {
   if (!editForm.value) return
-  try {
-    await api.put(`/api/assets/devices/${editForm.value.id}/`, editForm.value)
-    ElMessage.success('保存成功')
-    editDialogVisible.value = false
-    fetchData()
-  } catch {
-    ElMessage.error('保存失败')
-  }
+  handleSave(
+    () => api.put(`/api/assets/devices/${editForm.value.id}/`, editForm.value),
+    () => { editDialogVisible.value = false; fetchData(getDevices) }
+  )
 }
 
 const columns = [
@@ -75,35 +43,16 @@ const columns = [
   { key: 'operation', title: '操作', width: 200, fixed: FixedDir.RIGHT },
 ]
 
-const updateSize = () => {
-  if (tableRef.value) {
-    tableHeight.value = tableRef.value.clientHeight
-    tableWidth.value = tableRef.value.clientWidth
-  }
-}
-
-onMounted(() => {
-  fetchData()
-  nextTick(updateSize)
-  window.addEventListener('resize', updateSize)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateSize)
-})
+onMounted(() => fetchData(getDevices))
 </script>
 
 <template>
-  <div class="device-list">
-    <div class="list-header">
-      <h2>设备列表</h2>
-      <div class="list-actions">
-        <el-input v-model="search" placeholder="搜索主机名 / IP" clearable style="width: 220px" />
-        <el-button @click="importDialogVisible = true">导入</el-button>
-        <el-button type="primary">添加设备</el-button>
-      </div>
-    </div>
-
+  <PageLayout title="设备列表">
+    <template #actions>
+      <el-input v-model="search" placeholder="搜索主机名 / IP" clearable style="width: 220px" />
+      <el-button @click="importDialogVisible = true">导入</el-button>
+      <el-button type="primary">添加设备</el-button>
+    </template>
     <div ref="tableRef" class="table-wrapper">
       <el-table-v2
         v-loading="loading"
@@ -128,10 +77,7 @@ onUnmounted(() => {
         </template>
       </el-table-v2>
     </div>
-
-    <ImportDevice v-model:visible="importDialogVisible" @success="fetchData" />
-
-    <!-- 编辑弹窗 -->
+    <ImportDevice v-model:visible="importDialogVisible" @success="() => fetchData(getDevices)" />
     <el-dialog v-model="editDialogVisible" title="编辑设备" width="500px">
       <el-form v-if="editForm" label-width="80px">
         <el-form-item label="主机名">
@@ -155,37 +101,12 @@ onUnmounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleEditSave">保存</el-button>
+        <el-button type="primary" @click="saveEdit">保存</el-button>
       </template>
     </el-dialog>
-  </div>
+  </PageLayout>
 </template>
 
 <style scoped>
-.device-list {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-}
-.list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-.list-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-.list-actions {
-  display: flex;
-  gap: 8px;
-}
-.table-wrapper {
-  flex: 1;
-  min-height: 0;
-}
+.table-wrapper { flex: 1; min-height: 0; }
 </style>

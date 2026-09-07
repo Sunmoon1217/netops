@@ -1,63 +1,33 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
-import { ElTag } from 'element-plus'
-import { getDevices } from '@/api/devices'
+import PageLayout from '@/ui/PageLayout.vue'
+import DeviceFilter from '@/ui/DeviceFilter.vue'
+import { useCrudApi } from '@/composables/useCrudApi'
 
-const devices = ref<any[]>([])
-const policies = ref<any[]>([])
-const loading = ref(false)
+const { data: policies, loading, search, filteredData, fetchData } = useCrudApi(['name', 'policy_id'])
 const filterDevice = ref<number | ''>('')
-const search = ref('')
 
-const filteredData = computed(() => {
-  let data = policies.value
-  if (filterDevice.value) data = data.filter((p: any) => p.device === filterDevice.value)
-  if (search.value) {
-    const kw = search.value.toLowerCase()
-    data = data.filter((p: any) =>
-      p.name?.toLowerCase().includes(kw) || p.policy_id?.toLowerCase().includes(kw)
-    )
-  }
-  return data
+const displayed = computed(() => {
+  if (!filterDevice.value) return filteredData.value
+  return filteredData.value.filter((p: any) => p.device === filterDevice.value)
 })
 
-const fetchData = async () => {
-  loading.value = true
-  try {
-    const params = filterDevice.value ? `?device=${filterDevice.value}` : ''
-    const res = await fetch(`/api/assets/policies/${params}`)
-    const data = await res.json()
-    policies.value = data.results || data || []
-  } catch {
-    ElMessage.error('加载失败')
-  } finally {
-    loading.value = false
-  }
+const fetchAll = () => {
+  const params = filterDevice.value ? `?device=${filterDevice.value}` : ''
+  fetchData(() => fetch(`/api/assets/policies/${params}`).then(r => r.json()))
 }
 
-const fetchDevices = async () => {
-  try {
-    const res = await getDevices()
-    devices.value = res.data.results || res.data || []
-  } catch { /* ignore */ }
-}
-
-onMounted(() => { fetchDevices(); fetchData() })
+watch(filterDevice, () => fetchAll())
+onMounted(fetchAll)
 </script>
 
 <template>
-  <div class="page">
-    <div class="page-header">
-      <h2>访问策略</h2>
-      <div class="header-actions">
-        <el-select v-model="filterDevice" placeholder="设备" clearable style="width: 140px" @change="fetchData">
-          <el-option v-for="d in devices" :key="d.id" :label="d.hostname" :value="d.id" />
-        </el-select>
-        <el-input v-model="search" placeholder="搜索策略名称/ID" clearable style="width: 200px" />
-      </div>
-    </div>
+  <PageLayout title="访问策略">
+    <template #actions>
+      <DeviceFilter v-model="filterDevice" />
+      <el-input v-model="search" placeholder="搜索策略名称/ID" clearable style="width: 200px" />
+    </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="filteredData" stripe border height="100%">
+      <el-table v-loading="loading" :data="displayed" stripe border height="100%">
         <el-table-column prop="device_name" label="设备" width="140" />
         <el-table-column prop="policy_id" label="策略ID" width="100" />
         <el-table-column prop="order" label="顺序" width="70" />
@@ -80,13 +50,9 @@ onMounted(() => { fetchDevices(); fetchData() })
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
       </el-table>
     </div>
-  </div>
+  </PageLayout>
 </template>
 
 <style scoped>
-.page { display: flex; flex-direction: column; height: 100%; padding: 20px; }
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0; }
-.page-header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
-.header-actions { display: flex; gap: 8px; }
 .table-wrapper { flex: 1; min-height: 0; background: #fff; border-radius: 8px; overflow: hidden; }
 </style>
