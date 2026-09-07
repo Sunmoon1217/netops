@@ -21,7 +21,7 @@ const charts = ref<any[]>([])
 
 watch(data, (val) => { if (val) buildCharts() })
 
-function buildCharts() {
+const buildCharts = () => {
   const d = data.value
   const list: any[] = []
 

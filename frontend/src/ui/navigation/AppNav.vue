@@ -17,7 +17,7 @@ const layoutStore = useLayoutStore()
 const isVertical = computed(() => layoutStore.mode === 'side')
 const isCollapsed = computed(() => layoutStore.collapsed)
 
-function renderIcon(icon: Component) {
+const renderIcon = (icon: Component) => {
   return () => h(ElIcon, null, { default: () => h(icon) })
 }
 
