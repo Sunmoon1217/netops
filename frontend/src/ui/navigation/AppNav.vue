@@ -39,6 +39,12 @@ const menuOptions: MenuItem[] = [
     ],
   },
   {
+    index: '/topology', label: '网络拓扑', icon: renderIcon(IconPathTrace),
+    children: [
+      { index: '/topology', label: '拓扑图', icon: renderIcon(IconPathTrace) },
+    ],
+  },
+  {
     index: '/config', label: '配置管理', icon: renderIcon(IconConfig),
     children: [
       { index: '/config/slb', label: '负载均衡', icon: renderIcon(IconLoadBalancer) },

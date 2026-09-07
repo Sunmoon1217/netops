@@ -640,3 +640,12 @@ class RouteSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
 
+
+
+class TopologySerializer(serializers.ModelSerializer):
+    class Meta:
+        from assets.models import Topology
+
+        model = Topology
+        fields = ("id", "name", "description", "graph_data", "is_default", "created_at", "updated_at")
+        read_only_fields = ("id", "created_at", "updated_at")
