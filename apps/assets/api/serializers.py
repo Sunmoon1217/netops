@@ -649,3 +649,18 @@ class TopologySerializer(serializers.ModelSerializer):
         model = Topology
         fields = ("id", "name", "description", "graph_data", "is_default", "created_at", "updated_at")
         read_only_fields = ("id", "created_at", "updated_at")
+
+
+class ArpMacSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
+    class Meta:
+        from assets.models import ArpMac
+
+        model = ArpMac
+        fields = (
+            "id", "device", "device_hostname", "vlan", "interface",
+            "ip_address", "mac_address", "vendor", "arp_type",
+            "learned_at", "status", "created_at", "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")

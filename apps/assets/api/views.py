@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from assets.models import (
+    ArpMac,
     AddressBook,
     Cabinet,
     DataCenter,
@@ -190,6 +191,7 @@ def overview(request):
 
         # IPAM
         "subnet_count": Subnet.objects.count(),
+        "arp_mac_count": ArpMac.objects.count(),
         "subnets_by_dc": subnets_by_dc,
         "subnets_by_zone": subnets_by_zone,
     })
@@ -1056,3 +1058,28 @@ class TopologyViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     search_fields = ("name", "description")
     ordering_fields = ("name", "updated_at")
+
+
+class ArpMacViewSet(viewsets.ModelViewSet):
+    from assets.models import ArpMac
+
+    from .serializers import ArpMacSerializer
+
+    queryset = ArpMac.objects.select_related("device").all()
+    serializer_class = ArpMacSerializer
+    permission_classes = (AllowAny,)
+    search_fields = ("ip_address", "mac_address", "device__hostname", "interface", "vendor")
+    ordering_fields = ("ip_address", "mac_address", "vlan", "learned_at", "updated_at")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        vlan = self.request.query_params.get("vlan")
+        if vlan:
+            qs = qs.filter(vlan=vlan)
+        arp_type = self.request.query_params.get("arp_type")
+        if arp_type:
+            qs = qs.filter(arp_type=arp_type)
+        return qs
