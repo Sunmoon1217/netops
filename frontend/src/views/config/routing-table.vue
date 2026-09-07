@@ -3,6 +3,7 @@ import PageLayout from '@/ui/PageLayout.vue'
 import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
+import { protocolTagType } from '@/composables/useTagType'
 
 const { data: routes, loading, search, filteredData, fetchData } = useCrudApi(['destination', 'nexthop', 'interface'])
 const filterDevice = ref<number | ''>('')
@@ -22,10 +23,6 @@ const displayed = computed(() => {
   return d
 })
 
-const protocolTag = (p: string) => {
-  const map: Record<string, string> = { static: 'warning', connected: 'success', ospf: 'primary', bgp: 'danger' }
-  return map[p] || 'info'
-}
 
 onMounted(() => fetchData(() => fetch('/api/trace/routes/').then(r => r.json())))
 </script>
@@ -48,7 +45,7 @@ onMounted(() => fetchData(() => fetch('/api/trace/routes/').then(r => r.json()))
         <el-table-column prop="interface" label="出接口" width="150" />
         <el-table-column prop="protocol" label="协议" width="90">
           <template #default="{ row }">
-            <el-tag :type="protocolTag(row.protocol) as any" size="small">{{ row.protocol }}</el-tag>
+            <el-tag :type="protocolTagType(row.protocol)" size="small">{{ row.protocol }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="metric" label="度量值" width="80" />
