@@ -110,6 +110,7 @@ const handleMenuSelect = (index: string) => {
 
 <style scoped>
 .app-nav {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -131,6 +132,10 @@ const handleMenuSelect = (index: string) => {
 .logo-text { font-size: 1rem; font-weight: 600; color: var(--el-text-color-primary); }
 .logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
 .nav-collapse {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,7 +143,6 @@ const handleMenuSelect = (index: string) => {
   border-top: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
   color: var(--el-text-color-secondary);
-  flex-shrink: 0;
 }
 .nav-collapse:hover { background: var(--el-fill-color-light); }
 .nav-collapse .collapsed { transform: rotate(180deg); }
