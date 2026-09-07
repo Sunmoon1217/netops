@@ -37,6 +37,7 @@ const router = createRouter({
         { path: 'baseline/syslog/create', name: 'syslog-create', component: () => import('@/views/devices/forms/SyslogForm.vue') },
         { path: 'baseline/syslog/:id/edit', name: 'syslog-edit', component: () => import('@/views/devices/forms/SyslogForm.vue') },
         { path: 'parsers', name: 'device-parsers', component: () => import('@/views/devices/parsers.vue') },
+        { path: 'accounts', name: 'device-accounts', component: () => import('@/views/devices/accounts.vue') },
       ],
     },
     {

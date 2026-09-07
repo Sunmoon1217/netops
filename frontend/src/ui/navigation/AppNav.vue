@@ -36,6 +36,7 @@ const menuOptions: MenuItem[] = [
       { index: '/devices/interfaces', label: '接口管理', icon: renderIcon(IconInterfaces) },
       { index: '/devices/baseline', label: '基线管理', icon: renderIcon(IconBaseline) },
       { index: '/devices/parsers', label: '解析器模板', icon: renderIcon(IconParsers) },
+      { index: '/devices/accounts', label: '设备账号', icon: renderIcon(IconBaseline) },
     ],
   },
   {
