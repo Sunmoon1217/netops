@@ -1,4 +1,5 @@
 """防火墙数据保存器"""
+
 from logging import getLogger
 
 from .base import BaseSaver
@@ -11,7 +12,7 @@ class AddressBookSaver(BaseSaver):
     keys = ["address_books", "addresses"]
 
     def save(self, device, parsed_data: dict) -> tuple[int, int]:
-        from assets.models import AddressBook
+        from assets.models import IPAddress
 
         address_books = parsed_data.get("address_books", parsed_data.get("addresses", []))
         if not address_books:
@@ -25,8 +26,9 @@ class AddressBookSaver(BaseSaver):
             addresses = ab.get("addresses", [])
             targets = addresses if addresses else [ab]
             for addr in targets:
-                _, is_created = AddressBook.objects.update_or_create(
-                    device=device, name=name,
+                _, is_created = IPAddress.objects.update_or_create(
+                    device=device,
+                    name=name,
                     defaults={
                         "address_type": addr.get("type", "host"),
                         "ip_address": addr.get("ip_address") or addr.get("address"),
@@ -58,7 +60,8 @@ class ServiceSaver(BaseSaver):
             if not name:
                 continue
             _, is_created = Service.objects.update_or_create(
-                device=device, name=name,
+                device=device,
+                name=name,
                 defaults={
                     "protocol": svc.get("protocol", "tcp"),
                     "port": str(svc.get("port", "")),
@@ -88,7 +91,8 @@ class PolicySaver(BaseSaver):
             if not policy_id:
                 continue
             _, is_created = Policy.objects.update_or_create(
-                device=device, policy_id=policy_id,
+                device=device,
+                policy_id=policy_id,
                 defaults={
                     "order": p.get("order", 0),
                     "name": p.get("name", policy_id),

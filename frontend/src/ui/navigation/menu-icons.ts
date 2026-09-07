@@ -31,3 +31,9 @@ export const IconLayoutSide = createIcon('<rect x="3" y="3" width="18" height="1
 export const IconSun = createIcon('<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>')
 
 export const IconMoon = createIcon('<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>')
+
+export const IconTools = createIcon('<path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>')
+
+export const IconPathTrace = createIcon('<polygon points="3 11 22 2 13 21 11 13 3 11"/>')
+
+export const IconRouting = createIcon('<polygon points="3 11 22 2 13 21 11 13 3 11"/>')

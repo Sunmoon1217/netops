@@ -49,6 +49,9 @@ router.register(r"services", views.ServiceViewSet, basename="service")
 router.register(r"policies", views.PolicyViewSet, basename="policy")
 router.register(r"nat-rules", views.NatRuleViewSet, basename="nat-rule")
 
+# Routing
+router.register(r"routes", views.RouteViewSet, basename="route")
+
 # IPAM
 router.register(r"tags", views.TagViewSet, basename="tag")
 router.register(r"subnets", views.SubnetViewSet, basename="subnet")

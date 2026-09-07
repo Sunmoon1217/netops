@@ -7,7 +7,7 @@ import { useLayoutStore } from '@/stores/layout'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
-  IconIp, IconSubnet,
+  IconIp, IconSubnet, IconTools, IconPathTrace, IconRouting,
 } from './menu-icons'
 
 const router = useRouter()
@@ -45,6 +45,8 @@ const menuOptions: MenuItem[] = [
       { index: '/config/slb', label: '负载均衡', icon: renderIcon(IconLoadBalancer) },
       { index: '/config/gslb', label: '域名解析', icon: renderIcon(IconDns) },
       { index: '/config/firewall', label: '防火墙策略', icon: renderIcon(IconPolicy) },
+      { index: '/config/routing-table', label: '路由表', icon: renderIcon(IconRouting) },
+      { index: '/config/policy', label: '访问策略', icon: renderIcon(IconPolicy) },
     ],
   },
   {
@@ -53,6 +55,12 @@ const menuOptions: MenuItem[] = [
       { index: '/ipam/subnets', label: '网段管理', icon: renderIcon(IconSubnet) },
       { index: '/ipam/ip-addresses', label: 'IP 地址', icon: renderIcon(IconIp) },
       { index: '/ipam/tags', label: '标签管理', icon: renderIcon(IconIp) },
+    ],
+  },
+  {
+    index: '/tools', label: '工具', icon: renderIcon(IconTools),
+    children: [
+      { index: '/tools/path-trace', label: '路径追踪', icon: renderIcon(IconPathTrace) },
     ],
   },
 ]
@@ -75,6 +83,7 @@ const handleMenuSelect = (index: string) => {
       :collapse="isVertical && isCollapsed"
       unique-opened
       :collapse-transition="true"
+      :ellipsis="false"
       class="app-menu"
       @select="handleMenuSelect"
     >
@@ -140,7 +149,8 @@ const handleMenuSelect = (index: string) => {
 /* :deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; } */
 /* :deep(.el-sub-menu) { height: var(--nav-height); } */
 /* :deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; } */
-/* .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; } */
+/* .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
+.app-nav:not(.vertical) :deep(.el-sub-menu__title) { white-space: nowrap; } */
 /* :deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); } */
 /* :deep(.el-menu-item.is-active) { color: var(--el-color-primary); } */
 

@@ -7,7 +7,8 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
-      component: () => import('@/views/login/Login.vue'), meta: { skipLayout: true },
+      component: () => import('@/views/login/Login.vue'),
+      meta: { skipLayout: true },
     },
     {
       path: '/',
@@ -38,6 +39,8 @@ const router = createRouter({
         { path: 'slb', name: 'config-slb', component: () => import('@/views/config/slb.vue') },
         { path: 'gslb', name: 'config-gslb', component: () => import('@/views/config/gslb.vue') },
         { path: 'firewall', name: 'config-firewall', component: () => import('@/views/config/firewall.vue') },
+        { path: 'routing-table', name: 'config-routing-table', component: () => import('@/views/config/routing-table.vue') },
+        { path: 'policy', name: 'config-policy', component: () => import('@/views/config/policy.vue') },
       ],
     },
     {
@@ -49,6 +52,15 @@ const router = createRouter({
         { path: 'subnets', name: 'ipam-subnets', component: () => import('@/views/ipam/index.vue') },
         { path: 'ip-addresses', name: 'ipam-ip-addresses', component: () => import('@/views/ipam/ip-address.vue') },
         { path: 'tags', name: 'ipam-tags', component: () => import('@/views/ipam/tags.vue') },
+      ],
+    },
+    {
+      path: '/tools',
+      component: () => import('@/views/devices/index.vue'),
+      meta: { requiresAuth: true },
+      children: [
+        { path: '', redirect: '/tools/path-trace' },
+        { path: 'path-trace', name: 'tools-path-trace', component: () => import('@/views/tools/path-trace.vue') },
       ],
     },
   ],

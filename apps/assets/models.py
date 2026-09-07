@@ -1,4 +1,5 @@
 import re
+from typing import TYPE_CHECKING
 
 from django.db import models
 
@@ -226,6 +227,14 @@ class DeviceConnection(models.Model):
 
     def __str__(self):
         return f"{self.device.hostname} ({self.connection_type})"
+
+    def get_address(self) -> str:
+        """获取连接地址（优先级：连接地址 > 设备地址）"""
+        if self.address:
+            return self.address
+        if self.device:
+            return self.device.hostname
+        return ""
 
 
 class DeviceConfig(models.Model):
@@ -600,6 +609,10 @@ class GtmPool(ConfigBase):
 
 
 class AddressBook(ConfigBase):
+    if TYPE_CHECKING:
+        from django.db.models import Manager
+
+        children: Manager["AddressBook"]
     """地址簿"""
 
     ADDRESS_TYPE_CHOICES = (
@@ -831,3 +844,33 @@ class IPAddress(models.Model):
 
     def __str__(self):
         return self.ip_address
+
+
+class Route(models.Model):
+    """路由"""
+
+    PROTOCOL_CHOICES = (
+        ("static", "静态"),
+        ("connected", "直连"),
+        ("ospf", "OSPF"),
+        ("bgp", "BGP"),
+        ("rip", "RIP"),
+        ("other", "其他"),
+    )
+
+    vrf = models.ForeignKey(Vrf, on_delete=models.CASCADE, related_name="routes", verbose_name="VRF")
+    destination = models.CharField(max_length=18, verbose_name="目的网段 (CIDR)")
+    nexthop = models.GenericIPAddressField(null=True, blank=True, verbose_name="下一跳地址")
+    interface = models.CharField(max_length=255, blank=True, default="", verbose_name="出接口")
+    protocol = models.CharField(max_length=20, choices=PROTOCOL_CHOICES, default="static", verbose_name="协议")
+    metric = models.PositiveIntegerField(default=0, verbose_name="度量值")
+    enabled = models.BooleanField(default=True, verbose_name="启用")
+    description = models.TextField(blank=True, default="", verbose_name="描述")
+
+    class Meta:
+        verbose_name = "路由"
+        verbose_name_plural = verbose_name
+        constraints = (models.UniqueConstraint(fields=["vrf", "destination", "nexthop"], name="uni_route_vrf_dst_nh"),)
+
+    def __str__(self):
+        return f"{self.destination} → {self.nexthop or self.interface}"
