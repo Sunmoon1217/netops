@@ -71,9 +71,7 @@ class TraceResult:
 # ---------------------------------------------------------------------------
 
 
-def _ip_in_addressbook(
-    ip_str: str, ab: AddressBook, _visited: set[int] | None = None, _depth: int = 0
-) -> bool:
+def _ip_in_addressbook(ip_str: str, ab: AddressBook, _visited: set[int] | None = None, _depth: int = 0) -> bool:
     """判断IP是否在地址簿中"""
     if _visited is None:
         _visited = set()
@@ -92,16 +90,9 @@ def _ip_in_addressbook(
         network = ipaddress.ip_network(f"{ab.ip_address}/{ab.ip_netmask}", strict=False)
         return ip in network
     elif ab.address_type == "range" and ab.ip_start and ab.ip_end:
-        return (
-            int(ipaddress.ip_address(ab.ip_start))
-            <= int(ip)
-            <= int(ipaddress.ip_address(ab.ip_end))
-        )
+        return int(ipaddress.ip_address(ab.ip_start)) <= int(ip) <= int(ipaddress.ip_address(ab.ip_end))
     elif ab.address_type == "addressbook":
-        return any(
-            _ip_in_addressbook(ip_str, child, _visited, _depth + 1)
-            for child in ab.children.all()
-        )
+        return any(_ip_in_addressbook(ip_str, child, _visited, _depth + 1) for child in ab.children.all())
     return False
 
 
@@ -173,17 +164,13 @@ def _find_device_for_ip(ip_str: str) -> Device | None:
         ipaddress.ip_address(ip_str)
     except ValueError:
         return None
-    interface = (
-        Interface.objects.select_related("device").filter(ip_address=ip_str).first()
-    )
+    interface = Interface.objects.select_related("device").filter(ip_address=ip_str).first()
     return interface.device if interface else None
 
 
 def _find_device_by_interface(device: Device, interface_name: str) -> Device | None:
     """通过接口名查找连接的设备"""
-    interface = Interface.objects.filter(
-        device=device, interface=interface_name
-    ).first()
+    interface = Interface.objects.filter(device=device, interface=interface_name).first()
     if interface and interface.ip_address:
         return _find_device_for_ip(interface.ip_address)
     return None
@@ -262,18 +249,14 @@ def _find_vrf_from_routing_table(ip_str: str, subnet) -> str:
     # 查找所有匹配该网段的路由，按最长前缀排序
     matching_routes = []
     subnet_network = ipaddress.ip_network(subnet.network, strict=False)
-    for route in Route.objects.filter(
-        enabled=True, destination__isnull=False
-    ).select_related("vrf__device"):
+    for route in Route.objects.filter(enabled=True, destination__isnull=False).select_related("vrf__device"):
         try:
             route_network = ipaddress.ip_network(route.destination, strict=False)
             if (
                 route_network.subnet_of(subnet_network)  # type: ignore[reportArgumentType]
                 and subnet_network.prefixlen == route_network.prefixlen
             ):
-                device_id = (
-                    route.vrf.device.pk if route.vrf and route.vrf.device else None
-                )
+                device_id = route.vrf.device.pk if route.vrf and route.vrf.device else None
                 if device_id:
                     matching_routes.append((route, device_id, route_network.prefixlen))
         except ValueError:
@@ -348,9 +331,7 @@ def _find_vrf_from_dedicated_line(subnet) -> str:
     return "未知合作方"
 
 
-def _find_best_route(
-    device: Device, dst_ip: str, vrf_name: str = "default"
-) -> tuple[Route | None, str]:
+def _find_best_route(device: Device, dst_ip: str, vrf_name: str = "default") -> tuple[Route | None, str]:
     """在VRF中查找最精确路由"""
     try:
         dst = ipaddress.ip_address(dst_ip)
@@ -375,12 +356,8 @@ def _find_best_route(
 def _match_policy(src_ip: str, dst_ip: str, port: str, device: Device) -> dict | None:
     """匹配访问策略"""
     for policy in Policy.objects.filter(device=device, enabled=True).order_by("order"):
-        src_ok = not policy.source_addresses.exists() or _match_address_list(
-            src_ip, policy.source_addresses
-        )
-        dst_ok = not policy.destination_addresses.exists() or _match_address_list(
-            dst_ip, policy.destination_addresses
-        )
+        src_ok = not policy.source_addresses.exists() or _match_address_list(src_ip, policy.source_addresses)
+        dst_ok = not policy.destination_addresses.exists() or _match_address_list(dst_ip, policy.destination_addresses)
         port_ok = not policy.services.exists() or _match_service(port, policy.services)
         if src_ok and dst_ok and port_ok:
             return {
@@ -395,12 +372,8 @@ def _match_policy(src_ip: str, dst_ip: str, port: str, device: Device) -> dict |
 def _match_nat(src: str, dst: str, port: str, device: Device) -> dict | None:
     """匹配NAT规则"""
     for rule in NatRule.objects.filter(device=device, enabled=True).order_by("order"):
-        src_ok = not rule.source_addresses.exists() or _match_address_list(
-            src, rule.source_addresses
-        )
-        dst_ok = not rule.destination_addresses.exists() or _match_address_list(
-            dst, rule.destination_addresses
-        )
+        src_ok = not rule.source_addresses.exists() or _match_address_list(src, rule.source_addresses)
+        dst_ok = not rule.destination_addresses.exists() or _match_address_list(dst, rule.destination_addresses)
         port_ok = not rule.services.exists() or _match_service(port, rule.services)
         if src_ok and dst_ok and port_ok:
             result = {"id": rule.pk, "name": rule.name, "nat_type": rule.nat_type}
@@ -466,9 +439,7 @@ def _is_ip_address(s: str) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def trace_path(
-    src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS
-) -> TraceResult:
+def trace_path(src_ip: str, dst_ip: str, dst_port: str, max_hops: int = MAX_HOPS) -> TraceResult:
     """
     路径追踪主函数
 
@@ -552,9 +523,9 @@ def trace_path(
                 device_addr = conn.get_address()
 
         subnet = _find_subnet_for_ip(current_src if hop_count == 0 else device_addr)
-        zone = (
-            subnet.security_zone.name if subnet and subnet.security_zone else ""
-        ) or (src_device.security_zone.name if src_device.security_zone else "")
+        zone = (subnet.security_zone.name if subnet and subnet.security_zone else "") or (
+            src_device.security_zone.name if src_device.security_zone else ""
+        )
 
         hop = HopResult(
             device_name=src_device.hostname,
@@ -663,9 +634,7 @@ def trace_path(
         elif route.interface:
             next_device = _find_device_by_interface(src_device, route.interface)
             if next_device:
-                conn_intf = Interface.objects.filter(
-                    device=src_device, interface=route.interface
-                ).first()
+                conn_intf = Interface.objects.filter(device=src_device, interface=route.interface).first()
                 if conn_intf and conn_intf.ip_address:
                     current_src = conn_intf.ip_address
         else:
@@ -681,9 +650,7 @@ def trace_path(
         src_device = next_device
 
         # 10. 根据接收接口确定VRF
-        recv_intf = Interface.objects.filter(
-            device=src_device, ip_address=route.nexthop
-        ).first()
+        recv_intf = Interface.objects.filter(device=src_device, ip_address=route.nexthop).first()
         if recv_intf and recv_intf.vrf:
             vrf_name = recv_intf.vrf
 
