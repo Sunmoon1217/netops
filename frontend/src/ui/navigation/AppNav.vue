@@ -4,19 +4,16 @@ import { useRouter, useRoute } from 'vue-router'
 import { ElIcon } from 'element-plus'
 import type { Component } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
-import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
   IconIp, IconSubnet, IconTools, IconPathTrace, IconRouting,
-  IconLayoutTop, IconLayoutSide, IconSun, IconMoon,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
-const themeStore = useThemeStore()
 const authStore = useAuthStore()
 
 const isVertical = computed(() => layoutStore.mode === 'side')
@@ -115,16 +112,21 @@ const handleLogout = async () => {
       </template>
     </el-menu>
 
-    <!-- 右侧操作区 -->
+    <!-- 横向导航：右侧用户区 -->
     <div v-if="!isVertical" class="nav-right">
-      <el-tooltip :content="isVertical ? '顶栏布局' : '侧栏布局'" placement="bottom">
-        <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" circle size="small" @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
-      </el-tooltip>
-      <el-tooltip :content="themeStore.isDark ? '亮色模式' : '暗色模式'" placement="bottom">
-        <el-button :icon="themeStore.isDark ? IconMoon : IconSun" circle size="small" @click="themeStore.toggleDark()" />
-      </el-tooltip>
       <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
       <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
+    </div>
+
+    <!-- 纵向导航：底部用户区 -->
+    <div v-if="isVertical" class="nav-user-bottom">
+      <template v-if="!isCollapsed">
+        <span class="nav-username">{{ authStore.user?.username || 'admin' }}</span>
+        <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
+      </template>
+      <el-tooltip v-else content="登出" placement="right">
+        <el-button link type="danger" size="small" @click="handleLogout">⏻</el-button>
+      </el-tooltip>
     </div>
   </div>
 </template>
@@ -172,6 +174,16 @@ const handleLogout = async () => {
   align-items: center;
   gap: 10px;
   margin-left: auto;
+  flex-shrink: 0;
+}
+.nav-user-bottom {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--el-border-color-lighter);
   flex-shrink: 0;
 }
 .nav-username {

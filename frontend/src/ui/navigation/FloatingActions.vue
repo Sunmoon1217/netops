@@ -7,19 +7,15 @@ import { IconLayoutTop, IconLayoutSide, IconSun, IconMoon } from './menu-icons'
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
 const isVertical = computed(() => layoutStore.mode === 'side')
-
-const handleLayoutSwitch = () => {
-  layoutStore.setMode(isVertical.value ? 'top' : 'side')
-}
 </script>
 
 <template>
-  <div class="floating-actions">
+  <div class="floating-actions" :class="{ 'with-sidebar': isVertical }">
     <el-tooltip :content="isVertical ? '切换为顶栏布局' : '切换为侧栏布局'" placement="left">
-      <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" circle @click="handleLayoutSwitch" />
+      <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" circle size="small" @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
     </el-tooltip>
     <el-tooltip :content="themeStore.isDark ? '切换为亮色模式' : '切换为暗色模式'" placement="left">
-      <el-button :icon="themeStore.isDark ? IconMoon : IconSun" circle @click="themeStore.toggleDark()" />
+      <el-button :icon="themeStore.isDark ? IconMoon : IconSun" circle size="small" @click="themeStore.toggleDark()" />
     </el-tooltip>
   </div>
 </template>
@@ -27,11 +23,16 @@ const handleLayoutSwitch = () => {
 <style scoped>
 .floating-actions {
   position: fixed;
-  top: 16px;
+  top: 12px;
   right: 16px;
   z-index: 2000;
   display: flex;
-  flex-direction: column;
   gap: 8px;
+}
+.floating-actions.with-sidebar {
+  top: auto;
+  bottom: 16px;
+  left: 16px;
+  right: auto;
 }
 </style>

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLayoutStore } from '@/stores/layout'
 import AppNav from '@/ui/navigation/AppNav.vue'
+import FloatingActions from '@/ui/navigation/FloatingActions.vue'
 import TopLayout from '@/layout/TopLayout.vue'
 import SideLayout from '@/layout/SideLayout.vue'
 import Login from '@/views/login/Login.vue'
@@ -30,6 +31,7 @@ onMounted(() => {
     <template #nav><AppNav /></template>
     <template #main><router-view /></template>
   </component>
+  <FloatingActions v-if="isAuthenticated && !isLoginPage" />
 </template>
 
 <style>
