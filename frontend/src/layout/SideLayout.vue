@@ -32,7 +32,7 @@ const isCollapsed = computed(() => layoutStore.collapsed)
 }
 .side-main {
   flex: 1;
-  padding: 16px;
+  padding: 0;
   overflow: auto;
   background: var(--el-bg-color-page);
 }
