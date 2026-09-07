@@ -8,16 +8,15 @@ import {
   IconOverview, IconDevices, IconDeviceList, IconBaseline, IconInterfaces,
   IconParsers, IconConfig, IconLoadBalancer, IconDns, IconPolicy,
   IconIp, IconSubnet, IconTools, IconPathTrace, IconRouting,
+  IconLayoutSide,
 } from './menu-icons'
 
 const router = useRouter()
 const route = useRoute()
 const layoutStore = useLayoutStore()
+const collapsed = computed(() => layoutStore.collapsed)
 
-const isVertical = computed(() => layoutStore.mode === 'side')
-const isCollapsed = computed(() => layoutStore.collapsed)
-
-function renderIcon(icon: Component) {
+const renderIcon = (icon: Component) => {
   return () => h(ElIcon, null, { default: () => h(icon) })
 }
 
@@ -71,19 +70,17 @@ const handleMenuSelect = (index: string) => {
 </script>
 
 <template>
-  <div class="app-nav" :class="{ vertical: isVertical, collapsed: isVertical && isCollapsed }">
+  <div class="app-nav">
     <div class="nav-logo">
-      <span v-if="!isVertical || !isCollapsed" class="logo-text"><strong>Network Ops</strong></span>
+      <span v-if="!collapsed" class="logo-text"><strong>Network Ops</strong></span>
       <span v-else class="logo-icon"><strong>N</strong></span>
     </div>
 
     <el-menu
-      :mode="isVertical ? 'vertical' : 'horizontal'"
+      mode="vertical"
       :default-active="route.path"
-      :collapse="isVertical && isCollapsed"
+      :collapse="collapsed"
       unique-opened
-      :collapse-transition="true"
-      :ellipsis="false"
       class="app-menu"
       @select="handleMenuSelect"
     >
@@ -104,28 +101,22 @@ const handleMenuSelect = (index: string) => {
         </el-menu-item>
       </template>
     </el-menu>
+
+    <div class="nav-collapse" @click="layoutStore.toggleCollapsed">
+      <el-icon :class="{ collapsed }" :size="18"><component :is="IconLayoutSide" /></el-icon>
+    </div>
   </div>
 </template>
 
-<style lang="css" scoped>
+<style scoped>
 .app-nav {
-  --nav-height: 3rem;
+  position: relative;
   display: flex;
-  align-items: center;
-  width: 100%;
-  height: var(--nav-height);
-  padding: 0 1.25rem;
-  box-sizing: border-box;
-  background: var(--el-fill-color-blank);
-  border-bottom: 1px solid var(--el-border-color-lighter);
-}
-.app-nav.vertical {
   flex-direction: column;
   height: 100%;
   padding: 0;
-  border-bottom: none;
 }
-.app-nav.vertical :deep(.el-menu) {
+.app-nav :deep(.el-menu) {
   width: 100%;
   flex: 1;
   border-right: none;
@@ -134,24 +125,25 @@ const handleMenuSelect = (index: string) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  height: var(--nav-height);
-  box-sizing: border-box;
-}
-.app-nav:not(.vertical) .nav-logo { margin-right: 32px; }
-.app-nav.vertical .nav-logo {
-  width: 100%;
+  height: 42px;
   border-bottom: 1px solid var(--el-border-color-lighter);
+  flex-shrink: 0;
 }
-.logo-text { font-size: 1rem; font-weight: 600; white-space: nowrap; color: var(--el-text-color-primary); }
+.logo-text { font-size: 1rem; font-weight: 600; color: var(--el-text-color-primary); }
 .logo-icon { font-size: 1.2rem; color: var(--el-color-primary); }
-/* :deep(.el-menu) { border-right: none; border-bottom: none; height: var(--nav-height); line-height: var(--nav-height); } */
-/* :deep(.el-menu-item) { height: var(--nav-height); line-height: var(--nav-height); font-size: 14px; padding: 0 0.75rem; } */
-/* :deep(.el-sub-menu) { height: var(--nav-height); } */
-/* :deep(.el-sub-menu__title) { height: var(--nav-height) !important; line-height: var(--nav-height) !important; padding: 0 0.75rem !important; } */
-/* .app-nav:not(.vertical) :deep(.el-menu) { white-space: nowrap; flex: 1; overflow: visible; }
-.app-nav:not(.vertical) :deep(.el-sub-menu__title) { white-space: nowrap; } */
-/* :deep(.el-menu-item:hover) { background-color: var(--el-fill-color-light); } */
-/* :deep(.el-menu-item.is-active) { color: var(--el-color-primary); } */
-
+.nav-collapse {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-top: 1px solid var(--el-border-color-lighter);
+  cursor: pointer;
+  color: var(--el-text-color-secondary);
+}
+.nav-collapse:hover { background: var(--el-fill-color-light); }
+.nav-collapse .collapsed { transform: rotate(180deg); }
 </style>

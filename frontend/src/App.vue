@@ -2,43 +2,28 @@
 import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { useLayoutStore } from '@/stores/layout'
 import AppNav from '@/ui/navigation/AppNav.vue'
-import FloatingActions from '@/ui/navigation/FloatingActions.vue'
-import TopLayout from '@/layout/TopLayout.vue'
 import SideLayout from '@/layout/SideLayout.vue'
 import Login from '@/views/login/Login.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
-const layoutStore = useLayoutStore()
 
 const isLoginPage = computed(() => route.path === '/login')
 const isAuthenticated = computed(() => authStore.isAuthenticated)
-const currentLayout = computed(() => layoutStore.mode === 'top' ? TopLayout : SideLayout)
 
 onMounted(() => {
-  if (authStore.isAuthenticated) {
-    authStore.fetchUser()
-  }
+  if (authStore.isAuthenticated) authStore.fetchUser()
 })
 </script>
 
 <template>
-  <!-- 登录页 -->
   <Login v-if="isLoginPage" />
-
-  <!-- 未认证：显示登录页 -->
   <Login v-else-if="!isAuthenticated" />
-
-  <!-- 已认证：正常布局 -->
-  <component v-else :is="currentLayout">
+  <SideLayout v-else>
     <template #nav><AppNav /></template>
     <template #main><router-view /></template>
-  </component>
-
-  <!-- 浮动按钮（仅登录后显示） -->
-  <FloatingActions v-if="isAuthenticated && !isLoginPage" />
+  </SideLayout>
 </template>
 
 <style>

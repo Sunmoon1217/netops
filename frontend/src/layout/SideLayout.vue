@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
+import UserBar from '@/ui/UserBar.vue'
 
 const layoutStore = useLayoutStore()
 const isCollapsed = computed(() => layoutStore.collapsed)
@@ -11,9 +12,12 @@ const isCollapsed = computed(() => layoutStore.collapsed)
     <el-aside :width="isCollapsed ? '64px' : '160px'" class="side-aside">
       <slot name="nav" />
     </el-aside>
-    <el-main class="side-main">
-      <slot name="main" />
-    </el-main>
+    <el-container direction="vertical" class="side-content">
+      <UserBar />
+      <el-main class="side-main">
+        <slot name="main" />
+      </el-main>
+    </el-container>
   </el-container>
 </template>
 
@@ -28,7 +32,7 @@ const isCollapsed = computed(() => layoutStore.collapsed)
 }
 .side-main {
   flex: 1;
-  padding: 16px;
+  padding: 0;
   overflow: auto;
   background: var(--el-bg-color-page);
 }

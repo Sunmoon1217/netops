@@ -17,11 +17,11 @@ export default defineConfig({
           'element-plus': ['ElMessage', 'ElMessageBox', 'ElNotification'],
         },
       ],
-      dts: 'src/auto-imports.d.ts',
+      dts: 'auto-imports.d.ts',
     }),
     Components({
       resolvers: [ElementPlusResolver({ importStyle: 'css' })],
-      dts: 'src/components.d.ts',
+      dts: 'components.d.ts',
     }),
   ],
   resolve: {

@@ -1,6 +1,6 @@
 import { h, type Component } from 'vue'
 
-function createIcon(svg: string): Component {
+const createIcon = (svg: string): Component => {
   return {
     render() {
       return h('svg', {
