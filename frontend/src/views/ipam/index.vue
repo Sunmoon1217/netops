@@ -1,43 +1,19 @@
 <script setup lang="ts">
-import { getSubnets, createSubnet, updateSubnet, deleteSubnet } from '@/api/ipam'
-import { getTags } from '@/api/ipam'
+import PageLayout from '@/ui/PageLayout.vue'
+import { useCrudApi } from '@/composables/useCrudApi'
+import { getSubnets, createSubnet, updateSubnet, deleteSubnet, getTags } from '@/api/ipam'
 
-const subnets = ref<any[]>([])
-const tags = ref<any[]>([])
-const loading = ref(false)
-const search = ref('')
+const { data: subnets, loading, search, filteredData, fetchData, handleSave, handleDelete } = useCrudApi(['network', 'description'])
 const filterTag = ref<number | ''>('')
 const editVisible = ref(false)
 const editForm = ref<any>(null)
 const isNew = ref(false)
+const tags = ref<any[]>([])
 
-const filteredData = computed(() => {
-  if (!search.value) return subnets.value
-  const kw = search.value.toLowerCase()
-  return subnets.value.filter((s: any) =>
-    s.network?.toLowerCase().includes(kw) || s.description?.toLowerCase().includes(kw)
-  )
-})
-
-const fetchData = async () => {
-  loading.value = true
-  try {
-    const params: Record<string, any> = {}
-    if (filterTag.value) params.tag = filterTag.value
-    const res = await getSubnets(params)
-    subnets.value = res.data.results || res.data || []
-  } catch {
-    ElMessage.error('加载失败')
-  } finally {
-    loading.value = false
-  }
-}
-
-const fetchTags = async () => {
-  try {
-    const res = await getTags()
-    tags.value = res.data.results || res.data || []
-  } catch { /* ignore */ }
+const fetchAll = () => {
+  const params: Record<string, any> = {}
+  if (filterTag.value) params.tag = filterTag.value
+  fetchData(() => getSubnets(params))
 }
 
 const openAdd = () => {
@@ -52,45 +28,33 @@ const openEdit = (row: any) => {
   editVisible.value = true
 }
 
-const handleSave = async () => {
-  if (!editForm.value?.network) {
-    ElMessage.warning('请输入网段')
-    return
-  }
-  try {
-    if (isNew.value) await createSubnet(editForm.value)
-    else await updateSubnet(editForm.value.id, editForm.value)
-    ElMessage.success('保存成功')
-    editVisible.value = false
-    fetchData()
-  } catch (e: any) {
-    ElMessage.error(e?.response?.data?.network?.[0] || '保存失败')
-  }
+const save = () => {
+  if (!editForm.value?.network) { ElMessage.warning('请输入网段'); return }
+  const fn = isNew.value
+    ? () => createSubnet(editForm.value)
+    : () => updateSubnet(editForm.value.id, editForm.value)
+  handleSave(fn, () => { editVisible.value = false; fetchAll() })
 }
 
-const handleDelete = async (row: any) => {
-  await ElMessageBox.confirm(`确认删除 ${row.network}？`, '提示', { type: 'warning' })
-  await deleteSubnet(row.id)
-  ElMessage.success('已删除')
-  fetchData()
+const remove = (row: any) => {
+  handleDelete(row.network, () => deleteSubnet(row.id), fetchAll)
 }
 
-onMounted(() => { fetchTags(); fetchData() })
+onMounted(async () => {
+  fetchAll()
+  try { const res = await getTags(); tags.value = res.data.results || res.data || [] } catch {}
+})
 </script>
 
 <template>
-  <div class="page">
-    <div class="page-header">
-      <h2>IP 管理</h2>
-      <div class="header-actions">
-        <el-select v-model="filterTag" placeholder="标签" clearable style="width: 120px" @change="fetchData">
-          <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
-        </el-select>
-        <el-input v-model="search" placeholder="搜索网段/描述" clearable style="width: 200px" />
-        <el-button type="primary" @click="openAdd">新增网段</el-button>
-      </div>
-    </div>
-
+  <PageLayout title="IP 管理">
+    <template #actions>
+      <el-select v-model="filterTag" placeholder="标签" clearable style="width: 120px" @change="fetchAll">
+        <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
+      </el-select>
+      <el-input v-model="search" placeholder="搜索网段/描述" clearable style="width: 200px" />
+      <el-button type="primary" @click="openAdd">新增网段</el-button>
+    </template>
     <div class="table-wrapper">
       <el-table v-loading="loading" :data="filteredData" stripe border height="100%">
         <el-table-column prop="network" label="网段" width="160" sortable />
@@ -112,44 +76,31 @@ onMounted(() => { fetchTags(); fetchData() })
         <el-table-column label="操作" width="120" fixed="right" align="center">
           <template #default="{ row }">
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
-            <el-button size="small" link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
-
     <el-dialog v-model="editVisible" :title="isNew ? '新增网段' : '编辑网段'" width="500px">
       <el-form v-if="editForm" label-width="80px">
-        <el-form-item label="网段" required>
-          <el-input v-model="editForm.network" placeholder="如 10.0.0.0/24" />
-        </el-form-item>
-        <el-form-item label="网关">
-          <el-input v-model="editForm.gateway" placeholder="如 10.0.0.1" />
-        </el-form-item>
-        <el-form-item label="VLAN">
-          <el-input v-model="editForm.vlan" />
-        </el-form-item>
+        <el-form-item label="网段" required><el-input v-model="editForm.network" placeholder="如 10.0.0.0/24" /></el-form-item>
+        <el-form-item label="网关"><el-input v-model="editForm.gateway" placeholder="如 10.0.0.1" /></el-form-item>
+        <el-form-item label="VLAN"><el-input v-model="editForm.vlan" /></el-form-item>
         <el-form-item label="标签">
           <el-select v-model="editForm.tags" multiple filterable placeholder="选择标签" style="width: 100%">
             <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="editForm.description" type="textarea" :rows="2" />
-        </el-form-item>
+        <el-form-item label="描述"><el-input v-model="editForm.description" type="textarea" :rows="2" /></el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button type="primary" @click="save">保存</el-button>
       </template>
     </el-dialog>
-  </div>
+  </PageLayout>
 </template>
 
 <style scoped>
-.page { display: flex; flex-direction: column; height: 100%; padding: 20px; }
-.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-shrink: 0; }
-.page-header h2 { margin: 0; font-size: 1.2rem; font-weight: 600; }
-.header-actions { display: flex; gap: 8px; }
 .table-wrapper { flex: 1; min-height: 0; background: #fff; border-radius: 8px; overflow: hidden; }
 </style>
