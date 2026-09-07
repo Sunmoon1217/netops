@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 import {
   getSnmpConfigs, createSnmpConfig, updateSnmpConfig, deleteSnmpConfig,
@@ -62,7 +63,7 @@ onMounted(async () => {
         <div class="tab-toolbar">
           <el-button type="primary" size="small" @click="openAdd(snmpForm, { device: '', version: 'v2c', port: 161, trap_port: 162, enabled: true }, snmpIsNew, snmpEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="snmp.data.value" stripe border size="small">
+        <DataTable :data="snmp.data.value" :loading="loading" size="small" height="">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="version" label="版本" width="80" />
           <el-table-column prop="community_read" label="读社区" width="120" show-overflow-tooltip />
@@ -84,7 +85,7 @@ onMounted(async () => {
               <el-button size="small" link type="danger" @click="snmp.handleDelete('SNMP配置', () => deleteSnmpConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-tab-pane>
 
       <!-- NTP -->
@@ -92,7 +93,7 @@ onMounted(async () => {
         <div class="tab-toolbar">
           <el-button type="primary" size="small" @click="openAdd(ntpForm, { device: '', server1: '', timezone: 'UTC', sync_interval: 64, enabled: true }, ntpIsNew, ntpEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="ntp.data.value" stripe border size="small">
+        <DataTable :data="ntp.data.value" :loading="loading" size="small" height="">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="server1" label="NTP服务器1" width="150" />
           <el-table-column prop="server2" label="NTP服务器2" width="150" />
@@ -110,7 +111,7 @@ onMounted(async () => {
               <el-button size="small" link type="danger" @click="ntp.handleDelete('NTP配置', () => deleteNtpConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-tab-pane>
 
       <!-- Syslog -->
@@ -118,7 +119,7 @@ onMounted(async () => {
         <div class="tab-toolbar">
           <el-button type="primary" size="small" @click="openAdd(syslogForm, { device: '', port: 514, facility: 'local7', level: 'informational', enabled: true }, syslogIsNew, syslogEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="syslog.data.value" stripe border size="small">
+        <DataTable :data="syslog.data.value" :loading="loading" size="small" height="">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="server1" label="日志服务器1" width="150" />
           <el-table-column prop="server2" label="日志服务器2" width="150" />
@@ -136,7 +137,7 @@ onMounted(async () => {
               <el-button size="small" link type="danger" @click="syslog.handleDelete('Syslog配置', () => deleteSyslogConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-tab-pane>
     </el-tabs>
 

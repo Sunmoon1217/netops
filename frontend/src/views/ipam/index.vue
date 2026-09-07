@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 import { getSubnets, createSubnet, updateSubnet, deleteSubnet, getTags } from '@/api/ipam'
 
@@ -56,7 +57,7 @@ onMounted(async () => {
       <el-button type="primary" @click="openAdd">新增网段</el-button>
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="filteredData" stripe border height="100%">
+      <DataTable :data="filteredData" :loading="loading">
         <el-table-column prop="network" label="网段" width="160" sortable />
         <el-table-column prop="gateway" label="网关" width="140" />
         <el-table-column prop="vlan" label="VLAN" width="80" />
@@ -79,7 +80,7 @@ onMounted(async () => {
             <el-button size="small" link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </div>
     <el-dialog v-model="editVisible" :title="isNew ? '新增网段' : '编辑网段'" width="500px">
       <el-form v-if="editForm" label-width="80px">

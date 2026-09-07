@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 
@@ -27,7 +28,7 @@ onMounted(fetchAll)
       <el-input v-model="search" placeholder="搜索策略名称/ID" clearable style="width: 200px" />
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="displayed" stripe border height="100%">
+      <DataTable :data="displayed" :loading="loading">
         <el-table-column prop="device_name" label="设备" width="140" />
         <el-table-column prop="policy_id" label="策略ID" width="100" />
         <el-table-column prop="order" label="顺序" width="70" />
@@ -48,7 +49,7 @@ onMounted(fetchAll)
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="150" show-overflow-tooltip />
-      </el-table>
+      </DataTable>
     </div>
   </PageLayout>
 </template>

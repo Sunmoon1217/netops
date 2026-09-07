@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 import { getTags, createTag, updateTag, deleteTag } from '@/api/ipam'
 
@@ -41,7 +42,7 @@ onMounted(() => fetchData(getTags))
       <el-button type="primary" @click="openAdd">新增标签</el-button>
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="tags" stripe border height="100%">
+      <DataTable :data="tags" :loading="loading">
         <el-table-column prop="name" label="标签名称" width="200" sortable />
         <el-table-column prop="color" label="颜色" width="100">
           <template #default="{ row }">
@@ -56,7 +57,7 @@ onMounted(() => fetchData(getTags))
             <el-button size="small" link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </div>
     <el-dialog v-model="editVisible" :title="isNew ? '新增标签' : '编辑标签'" width="400px">
       <el-form v-if="editForm" label-width="70px">

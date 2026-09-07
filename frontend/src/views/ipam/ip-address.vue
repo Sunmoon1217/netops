@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 import { getIpAddresses, createIpAddress, updateIpAddress, deleteIpAddress } from '@/api/ipam'
 import { getDevices } from '@/api/devices'
@@ -73,7 +74,7 @@ onMounted(async () => {
       <el-button type="primary" @click="openAdd">新增 IP</el-button>
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="displayed" stripe border height="100%">
+      <DataTable :data="displayed" :loading="loading">
         <el-table-column prop="ip_address" label="IP 地址" width="150" sortable />
         <el-table-column prop="subnet_network" label="所属网段" width="140" />
         <el-table-column prop="status" label="状态" width="90">
@@ -91,7 +92,7 @@ onMounted(async () => {
             <el-button size="small" link type="danger" @click="remove(row)">删除</el-button>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </div>
     <el-dialog v-model="editVisible" :title="isNew ? '新增 IP 地址' : '编辑 IP 地址'" width="500px">
       <el-form v-if="editForm" label-width="90px">

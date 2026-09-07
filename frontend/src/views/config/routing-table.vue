@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 
@@ -39,7 +40,7 @@ onMounted(() => fetchData(() => fetch('/api/trace/routes/').then(r => r.json()))
       <el-input v-model="search" placeholder="搜索" clearable style="width: 180px" />
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="displayed" stripe border height="100%">
+      <DataTable :data="displayed" :loading="loading">
         <el-table-column prop="device" label="设备" width="140" sortable />
         <el-table-column prop="vrf" label="VRF" width="100" />
         <el-table-column prop="destination" label="目的网段" width="160" />
@@ -51,7 +52,7 @@ onMounted(() => fetchData(() => fetch('/api/trace/routes/').then(r => r.json()))
           </template>
         </el-table-column>
         <el-table-column prop="metric" label="度量值" width="80" />
-      </el-table>
+      </DataTable>
     </div>
   </PageLayout>
 </template>

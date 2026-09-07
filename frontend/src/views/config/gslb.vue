@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { getGtmWideips, getGtmPools } from '@/api/config'
 
@@ -35,7 +36,7 @@ onMounted(fetchData)
     </template>
     <el-tabs v-model="activeTab" class="page-tabs">
       <el-tab-pane label="Wide IP" name="wideip">
-        <el-table v-loading="loading" :data="wideips" stripe border size="small" height="100%">
+        <DataTable :data="wideips" :loading="loading" size="small">
           <el-table-column prop="device_hostname" label="设备" width="140" sortable />
           <el-table-column prop="name" label="域名" width="220" sortable />
           <el-table-column prop="rtype" label="记录类型" width="100" />
@@ -46,10 +47,10 @@ onMounted(fetchData)
               <span v-if="!row.pools?.length" style="color: #c0c4cc">-</span>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-tab-pane>
       <el-tab-pane label="Pool" name="pool">
-        <el-table v-loading="loading" :data="pools" stripe border size="small" height="100%">
+        <DataTable :data="pools" :loading="loading" size="small">
           <el-table-column prop="device_hostname" label="设备" width="140" sortable />
           <el-table-column prop="name" label="名称" width="180" sortable />
           <el-table-column prop="lb_mode" label="负载模式" width="120" />
@@ -57,7 +58,7 @@ onMounted(fetchData)
           <el-table-column prop="fallback_mode" label="回退模式" width="120" />
           <el-table-column prop="fallback_ip" label="回退IP" width="140" />
           <el-table-column prop="ttl" label="TTL" width="70" />
-        </el-table>
+        </DataTable>
       </el-tab-pane>
     </el-tabs>
   </PageLayout>

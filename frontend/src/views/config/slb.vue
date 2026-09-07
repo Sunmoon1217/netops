@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { getLtmVirtualServers, getLtmPools } from '@/api/config'
 
@@ -35,7 +36,7 @@ onMounted(fetchData)
     </template>
     <el-tabs v-model="activeTab" class="page-tabs">
       <el-tab-pane label="Virtual Server" name="vs">
-        <el-table v-loading="loading" :data="virtualServers" stripe border size="small" height="100%">
+        <DataTable :data="virtualServers" :loading="loading" size="small">
           <el-table-column prop="device_hostname" label="设备" width="140" sortable />
           <el-table-column prop="name" label="名称" width="180" sortable />
           <el-table-column prop="vs_address" label="虚拟地址" width="140" />
@@ -44,10 +45,10 @@ onMounted(fetchData)
           <el-table-column prop="pool" label="关联池" width="140" />
           <el-table-column prop="snat_type" label="SNAT" width="100" />
           <el-table-column prop="persist" label="会话保持" width="100" />
-        </el-table>
+        </DataTable>
       </el-tab-pane>
       <el-tab-pane label="Pool" name="pool">
-        <el-table v-loading="loading" :data="pools" stripe border size="small" height="100%">
+        <DataTable :data="pools" :loading="loading" size="small">
           <el-table-column prop="device_hostname" label="设备" width="140" sortable />
           <el-table-column prop="name" label="名称" width="180" sortable />
           <el-table-column prop="mode" label="负载模式" width="120" />
@@ -57,7 +58,7 @@ onMounted(fetchData)
               <span v-if="!row.monitors?.length" style="color: #c0c4cc">-</span>
             </template>
           </el-table-column>
-        </el-table>
+        </DataTable>
       </el-tab-pane>
     </el-tabs>
   </PageLayout>

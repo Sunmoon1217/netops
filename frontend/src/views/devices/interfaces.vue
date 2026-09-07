@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PageLayout from '@/ui/PageLayout.vue'
+import DataTable from '@/ui/DataTable.vue'
 import DeviceFilter from '@/ui/DeviceFilter.vue'
 import { useCrudApi } from '@/composables/useCrudApi'
 import { getInterfaces, updateInterface } from '@/api/interfaces'
@@ -70,7 +71,7 @@ onMounted(fetchAll)
       <el-input v-model="search" placeholder="搜索接口/IP/设备" clearable style="width: 200px" />
     </template>
     <div class="table-wrapper">
-      <el-table v-loading="loading" :data="displayed" stripe border height="100%" style="width: 100%">
+      <DataTable :data="displayed" :loading="loading">
         <el-table-column prop="device_hostname" label="设备" width="150" sortable />
         <el-table-column prop="interface" label="接口" width="140" sortable />
         <el-table-column prop="mode" label="模式" width="100">
@@ -98,7 +99,7 @@ onMounted(fetchAll)
             <el-button size="small" link type="primary" @click="openEdit(row)">编辑</el-button>
           </template>
         </el-table-column>
-      </el-table>
+      </DataTable>
     </div>
     <el-dialog v-model="editVisible" title="编辑接口" width="500px">
       <el-form v-if="editForm" label-width="80px">
