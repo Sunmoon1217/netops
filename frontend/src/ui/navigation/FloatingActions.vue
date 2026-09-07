@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useLayoutStore } from '@/stores/layout'
 import { useThemeStore } from '@/stores/theme'
 import { IconLayoutTop, IconLayoutSide, IconSun, IconMoon } from './menu-icons'
+import { computed } from 'vue'
 
 const layoutStore = useLayoutStore()
 const themeStore = useThemeStore()
@@ -10,7 +10,7 @@ const isVertical = computed(() => layoutStore.mode === 'side')
 </script>
 
 <template>
-  <div class="floating-actions" :class="{ 'with-sidebar': isVertical }">
+  <div class="floating-actions">
     <el-tooltip :content="isVertical ? '切换为顶栏布局' : '切换为侧栏布局'" placement="left">
       <el-button :icon="isVertical ? IconLayoutSide : IconLayoutTop" circle size="small" @click="layoutStore.setMode(isVertical ? 'top' : 'side')" />
     </el-tooltip>
@@ -28,11 +28,5 @@ const isVertical = computed(() => layoutStore.mode === 'side')
   z-index: 2000;
   display: flex;
   gap: 8px;
-}
-.floating-actions.with-sidebar {
-  top: auto;
-  bottom: 16px;
-  left: 16px;
-  right: auto;
 }
 </style>
