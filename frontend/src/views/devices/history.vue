@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { getDevice, getGitConfigContent, getConfigHistory } from '@/api/devices'
-import CompareDialog from './components/CompareDialog.vue'
+import CompareDialog from './dialogs/CompareDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
