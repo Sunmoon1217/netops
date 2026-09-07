@@ -16,22 +16,19 @@ const handleLogout = async () => {
 
 <template>
   <div class="user-bar">
-    <div class="bar-left">
-      <el-input
-        v-model="searchQuery"
-        placeholder="全局搜索"
-        clearable
-        prefix-icon="Search"
-        style="width: 280px;"
-        size="small"
-      />
-    </div>
+    <el-input
+      v-model="searchQuery"
+      placeholder="全局搜索"
+      clearable
+      prefix-icon="Search"
+      style="width: 280px;"
+      size="small"
+    />
     <div class="bar-right">
+      <span class="username">{{ authStore.user?.username || 'admin' }}</span>
       <el-tooltip :content="themeStore.isDark ? '亮色模式' : '暗色模式'" placement="bottom">
         <el-button :icon="themeStore.isDark ? IconMoon : IconSun" size="small" @click="themeStore.toggleDark()" />
       </el-tooltip>
-      <span class="username">{{ authStore.user?.username || 'admin' }}</span>
-      <el-divider direction="vertical" />
       <el-button link type="danger" size="small" @click="handleLogout">登出</el-button>
     </div>
   </div>
@@ -48,7 +45,7 @@ const handleLogout = async () => {
   background: var(--el-bg-color);
   flex-shrink: 0;
 }
-.bar-left, .bar-right {
+.bar-right {
   display: flex;
   align-items: center;
   gap: 10px;
