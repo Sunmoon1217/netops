@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import PageLayout from '@/ui/PageLayout.vue'
+import { useCrudApi } from '@/composables/useCrudApi'
 import {
   getSnmpConfigs, createSnmpConfig, updateSnmpConfig, deleteSnmpConfig,
   getNtpConfigs, createNtpConfig, updateNtpConfig, deleteNtpConfig,
@@ -10,40 +12,27 @@ const activeTab = ref('snmp')
 const devices = ref<any[]>([])
 const loading = ref(false)
 
-// SNMP
-const snmpData = ref<any[]>([])
+const snmp = useCrudApi()
+const ntp = useCrudApi()
+const syslog = useCrudApi()
+
 const snmpEditVisible = ref(false)
 const snmpForm = ref<any>({})
 const snmpIsNew = ref(false)
-
-// NTP
-const ntpData = ref<any[]>([])
 const ntpEditVisible = ref(false)
 const ntpForm = ref<any>({})
 const ntpIsNew = ref(false)
-
-// Syslog
-const syslogData = ref<any[]>([])
 const syslogEditVisible = ref(false)
 const syslogForm = ref<any>({})
 const syslogIsNew = ref(false)
 
-const fetchDevices = async () => {
-  try {
-    const res = await getDevices()
-    devices.value = res.data.results || res.data || []
-  } catch { /* ignore */ }
-}
-
-const fetchData = async () => {
+const fetchAll = async () => {
   loading.value = true
   try {
-    const [snmp, ntp, syslog] = await Promise.all([
-      getSnmpConfigs(), getNtpConfigs(), getSyslogConfigs(),
-    ])
-    snmpData.value = snmp.data.results || snmp.data || []
-    ntpData.value = ntp.data.results || ntp.data || []
-    syslogData.value = syslog.data.results || syslog.data || []
+    const [s, n, l] = await Promise.all([getSnmpConfigs(), getNtpConfigs(), getSyslogConfigs()])
+    snmp.data.value = s.data.results || s.data || []
+    ntp.data.value = n.data.results || n.data || []
+    syslog.data.value = l.data.results || l.data || []
   } catch {
     ElMessage.error('加载失败')
   } finally {
@@ -51,108 +40,29 @@ const fetchData = async () => {
   }
 }
 
-const getDeviceName = (id: number) => devices.value.find((d) => d.id === id)?.hostname || id
-
-// SNMP
-const addSnmp = () => {
-  snmpForm.value = { device: '', version: 'v2c', port: 161, trap_port: 162, enabled: true }
-  snmpIsNew.value = true
-  snmpEditVisible.value = true
+// Helper: open add/edit dialog
+const openAdd = (form: any, defaults: any, isNewRef: any, visibleRef: any) => {
+  form.value = { ...defaults }; isNewRef.value = true; visibleRef.value = true
 }
-const editSnmp = (row: any) => {
-  snmpForm.value = { ...row }
-  snmpIsNew.value = false
-  snmpEditVisible.value = true
-}
-const saveSnmp = async () => {
-  try {
-    if (snmpIsNew.value) await createSnmpConfig(snmpForm.value)
-    else await updateSnmpConfig(snmpForm.value.id, snmpForm.value)
-    ElMessage.success('保存成功')
-    snmpEditVisible.value = false
-    fetchData()
-  } catch { ElMessage.error('保存失败') }
-}
-const removeSnmp = async (id: number) => {
-  await ElMessageBox.confirm('确认删除？', '提示', { type: 'warning' })
-  await deleteSnmpConfig(id)
-  ElMessage.success('已删除')
-  fetchData()
+const openEdit = (row: any, form: any, isNewRef: any, visibleRef: any) => {
+  form.value = { ...row }; isNewRef.value = false; visibleRef.value = true
 }
 
-// NTP
-const addNtp = () => {
-  ntpForm.value = { device: '', server1: '', timezone: 'UTC', sync_interval: 64, enabled: true }
-  ntpIsNew.value = true
-  ntpEditVisible.value = true
-}
-const editNtp = (row: any) => {
-  ntpForm.value = { ...row }
-  ntpIsNew.value = false
-  ntpEditVisible.value = true
-}
-const saveNtp = async () => {
-  try {
-    if (ntpIsNew.value) await createNtpConfig(ntpForm.value)
-    else await updateNtpConfig(ntpForm.value.id, ntpForm.value)
-    ElMessage.success('保存成功')
-    ntpEditVisible.value = false
-    fetchData()
-  } catch { ElMessage.error('保存失败') }
-}
-const removeNtp = async (id: number) => {
-  await ElMessageBox.confirm('确认删除？', '提示', { type: 'warning' })
-  await deleteNtpConfig(id)
-  ElMessage.success('已删除')
-  fetchData()
-}
-
-// Syslog
-const addSyslog = () => {
-  syslogForm.value = { device: '', port: 514, facility: 'local7', level: 'informational', enabled: true }
-  syslogIsNew.value = true
-  syslogEditVisible.value = true
-}
-const editSyslog = (row: any) => {
-  syslogForm.value = { ...row }
-  syslogIsNew.value = false
-  syslogEditVisible.value = true
-}
-const saveSyslog = async () => {
-  try {
-    if (syslogIsNew.value) await createSyslogConfig(syslogForm.value)
-    else await updateSyslogConfig(syslogForm.value.id, syslogForm.value)
-    ElMessage.success('保存成功')
-    syslogEditVisible.value = false
-    fetchData()
-  } catch { ElMessage.error('保存失败') }
-}
-const removeSyslog = async (id: number) => {
-  await ElMessageBox.confirm('确认删除？', '提示', { type: 'warning' })
-  await deleteSyslogConfig(id)
-  ElMessage.success('已删除')
-  fetchData()
-}
-
-onMounted(() => {
-  fetchDevices()
-  fetchData()
+onMounted(async () => {
+  fetchAll()
+  try { const res = await getDevices(); devices.value = res.data.results || res.data || [] } catch {}
 })
 </script>
 
 <template>
-  <div class="page">
-    <div class="page-header">
-      <h2>基线管理</h2>
-    </div>
-
+  <PageLayout title="基线管理">
     <el-tabs v-model="activeTab" class="page-tabs">
       <!-- SNMP -->
       <el-tab-pane label="SNMP" name="snmp">
         <div class="tab-toolbar">
-          <el-button type="primary" size="small" @click="addSnmp">新增</el-button>
+          <el-button type="primary" size="small" @click="openAdd(snmpForm, { device: '', version: 'v2c', port: 161, trap_port: 162, enabled: true }, snmpIsNew, snmpEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="snmpData" stripe border size="small">
+        <el-table v-loading="loading" :data="snmp.data.value" stripe border size="small">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="version" label="版本" width="80" />
           <el-table-column prop="community_read" label="读社区" width="120" show-overflow-tooltip />
@@ -160,9 +70,7 @@ onMounted(() => {
           <el-table-column prop="port" label="端口" width="80" />
           <el-table-column prop="trap_enabled" label="Trap" width="70" align="center">
             <template #default="{ row }">
-              <el-tag :type="row.trap_enabled ? 'success' : 'info'" size="small">
-                {{ row.trap_enabled ? '开' : '关' }}
-              </el-tag>
+              <el-tag :type="row.trap_enabled ? 'success' : 'info'" size="small">{{ row.trap_enabled ? '开' : '关' }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="enabled" label="启用" width="70" align="center">
@@ -172,8 +80,8 @@ onMounted(() => {
           </el-table-column>
           <el-table-column label="操作" width="120" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button size="small" link type="primary" @click="editSnmp(row)">编辑</el-button>
-              <el-button size="small" link type="danger" @click="removeSnmp(row.id)">删除</el-button>
+              <el-button size="small" link type="primary" @click="openEdit(row, snmpForm, snmpIsNew, snmpEditVisible)">编辑</el-button>
+              <el-button size="small" link type="danger" @click="snmp.handleDelete('SNMP配置', () => deleteSnmpConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -182,9 +90,9 @@ onMounted(() => {
       <!-- NTP -->
       <el-tab-pane label="NTP" name="ntp">
         <div class="tab-toolbar">
-          <el-button type="primary" size="small" @click="addNtp">新增</el-button>
+          <el-button type="primary" size="small" @click="openAdd(ntpForm, { device: '', server1: '', timezone: 'UTC', sync_interval: 64, enabled: true }, ntpIsNew, ntpEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="ntpData" stripe border size="small">
+        <el-table v-loading="loading" :data="ntp.data.value" stripe border size="small">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="server1" label="NTP服务器1" width="150" />
           <el-table-column prop="server2" label="NTP服务器2" width="150" />
@@ -198,8 +106,8 @@ onMounted(() => {
           </el-table-column>
           <el-table-column label="操作" width="120" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button size="small" link type="primary" @click="editNtp(row)">编辑</el-button>
-              <el-button size="small" link type="danger" @click="removeNtp(row.id)">删除</el-button>
+              <el-button size="small" link type="primary" @click="openEdit(row, ntpForm, ntpIsNew, ntpEditVisible)">编辑</el-button>
+              <el-button size="small" link type="danger" @click="ntp.handleDelete('NTP配置', () => deleteNtpConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -208,9 +116,9 @@ onMounted(() => {
       <!-- Syslog -->
       <el-tab-pane label="Syslog" name="syslog">
         <div class="tab-toolbar">
-          <el-button type="primary" size="small" @click="addSyslog">新增</el-button>
+          <el-button type="primary" size="small" @click="openAdd(syslogForm, { device: '', port: 514, facility: 'local7', level: 'informational', enabled: true }, syslogIsNew, syslogEditVisible)">新增</el-button>
         </div>
-        <el-table v-loading="loading" :data="syslogData" stripe border size="small">
+        <el-table v-loading="loading" :data="syslog.data.value" stripe border size="small">
           <el-table-column prop="device_hostname" label="设备" width="150" />
           <el-table-column prop="server1" label="日志服务器1" width="150" />
           <el-table-column prop="server2" label="日志服务器2" width="150" />
@@ -224,15 +132,15 @@ onMounted(() => {
           </el-table-column>
           <el-table-column label="操作" width="120" fixed="right" align="center">
             <template #default="{ row }">
-              <el-button size="small" link type="primary" @click="editSyslog(row)">编辑</el-button>
-              <el-button size="small" link type="danger" @click="removeSyslog(row.id)">删除</el-button>
+              <el-button size="small" link type="primary" @click="openEdit(row, syslogForm, syslogIsNew, syslogEditVisible)">编辑</el-button>
+              <el-button size="small" link type="danger" @click="syslog.handleDelete('Syslog配置', () => deleteSyslogConfig(row.id), fetchAll)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </el-tab-pane>
     </el-tabs>
 
-    <!-- SNMP 编辑弹窗 -->
+    <!-- SNMP 弹窗 -->
     <el-dialog v-model="snmpEditVisible" :title="snmpIsNew ? '新增 SNMP 配置' : '编辑 SNMP 配置'" width="500px">
       <el-form v-if="snmpForm" label-width="90px">
         <el-form-item label="设备" required>
@@ -253,11 +161,11 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="snmpEditVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveSnmp">保存</el-button>
+        <el-button type="primary" @click="snmp.handleSave(snmpIsNew ? () => createSnmpConfig(snmpForm) : () => updateSnmpConfig(snmpForm.id, snmpForm), () => { snmpEditVisible = false; fetchAll() })">保存</el-button>
       </template>
     </el-dialog>
 
-    <!-- NTP 编辑弹窗 -->
+    <!-- NTP 弹窗 -->
     <el-dialog v-model="ntpEditVisible" :title="ntpIsNew ? '新增 NTP 配置' : '编辑 NTP 配置'" width="500px">
       <el-form v-if="ntpForm" label-width="90px">
         <el-form-item label="设备" required>
@@ -273,11 +181,11 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="ntpEditVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveNtp">保存</el-button>
+        <el-button type="primary" @click="ntp.handleSave(ntpIsNew ? () => createNtpConfig(ntpForm) : () => updateNtpConfig(ntpForm.id, ntpForm), () => { ntpEditVisible = false; fetchAll() })">保存</el-button>
       </template>
     </el-dialog>
 
-    <!-- Syslog 编辑弹窗 -->
+    <!-- Syslog 弹窗 -->
     <el-dialog v-model="syslogEditVisible" :title="syslogIsNew ? '新增 Syslog 配置' : '编辑 Syslog 配置'" width="500px">
       <el-form v-if="syslogForm" label-width="90px">
         <el-form-item label="设备" required>
@@ -301,33 +209,13 @@ onMounted(() => {
       </el-form>
       <template #footer>
         <el-button @click="syslogEditVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveSyslog">保存</el-button>
+        <el-button type="primary" @click="syslog.handleSave(syslogIsNew ? () => createSyslogConfig(syslogForm) : () => updateSyslogConfig(syslogForm.id, syslogForm), () => { syslogEditVisible = false; fetchAll() })">保存</el-button>
       </template>
     </el-dialog>
-  </div>
+  </PageLayout>
 </template>
 
 <style scoped>
-.page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 20px;
-}
-.page-header {
-  flex-shrink: 0;
-  margin-bottom: 16px;
-}
-.page-header h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-.page-tabs {
-  flex: 1;
-  min-height: 0;
-}
-.tab-toolbar {
-  margin-bottom: 12px;
-}
+.page-tabs { flex: 1; min-height: 0; }
+.tab-toolbar { margin-bottom: 12px; }
 </style>
