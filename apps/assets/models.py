@@ -269,7 +269,9 @@ class ConfigBase(models.Model):
 class Vlan(models.Model):
     """VLAN"""
 
-    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="vlans", null=True, blank=True, verbose_name="所属设备")
+    device = models.ForeignKey(
+        Device, on_delete=models.CASCADE, related_name="vlans", null=True, blank=True, verbose_name="所属设备"
+    )
     vid = models.PositiveIntegerField(verbose_name="VLAN ID")
     name = models.CharField(max_length=100, blank=True, default="", verbose_name="VLAN名称")
     description = models.CharField(max_length=255, blank=True, default="", verbose_name="描述")
@@ -938,9 +940,7 @@ class ArpMac(models.Model):
         verbose_name_plural = verbose_name
         ordering = ("-updated_at",)
         constraints = (
-            models.UniqueConstraint(
-                fields=["device", "ip_address", "mac_address"], name="uni_arpmac_device_ip_mac"
-            ),
+            models.UniqueConstraint(fields=["device", "ip_address", "mac_address"], name="uni_arpmac_device_ip_mac"),
         )
 
     def __str__(self):

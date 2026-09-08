@@ -1,4 +1,5 @@
 """路径追踪 + 路由采集 API"""
+
 import logging
 
 import requests
@@ -22,27 +23,41 @@ def path_trace(request):
         return Response({"error": "src and dst 参数必填"}, status=http_status.HTTP_400_BAD_REQUEST)
 
     from ops.path_tracer import trace_path
+
     result = trace_path(src_ip, dst_ip, dst_port)
 
-    return Response({
-        "hops": [
-            {
-                "device_name": h.device_name, "device_id": h.device_id,
-                "device_type": h.device_type, "zone": h.zone, "vrf": h.vrf,
-                "matched_policy": h.matched_policy, "matched_nat": h.matched_nat,
-                "matched_route": h.matched_route, "matched_vs": h.matched_vs,
-                "action": h.action,
-                "src_before": h.src_before, "src_after": h.src_after,
-                "dst_before": h.dst_before, "dst_after": h.dst_after,
-                "port_before": h.port_before, "port_after": h.port_after,
-            }
-            for h in result.hops
-        ],
-        "final_src": result.final_src, "final_dst": result.final_dst,
-        "final_port": result.final_port, "blocked": result.blocked,
-        "blocked_by": result.blocked_by, "lb_backend": result.lb_backend,
-        "error": result.error,
-    })
+    return Response(
+        {
+            "hops": [
+                {
+                    "device_name": h.device_name,
+                    "device_id": h.device_id,
+                    "device_type": h.device_type,
+                    "zone": h.zone,
+                    "vrf": h.vrf,
+                    "matched_policy": h.matched_policy,
+                    "matched_nat": h.matched_nat,
+                    "matched_route": h.matched_route,
+                    "matched_vs": h.matched_vs,
+                    "action": h.action,
+                    "src_before": h.src_before,
+                    "src_after": h.src_after,
+                    "dst_before": h.dst_before,
+                    "dst_after": h.dst_after,
+                    "port_before": h.port_before,
+                    "port_after": h.port_after,
+                }
+                for h in result.hops
+            ],
+            "final_src": result.final_src,
+            "final_dst": result.final_dst,
+            "final_port": result.final_port,
+            "blocked": result.blocked,
+            "blocked_by": result.blocked_by,
+            "lb_backend": result.lb_backend,
+            "error": result.error,
+        }
+    )
 
 
 @api_view(["POST"])
@@ -132,7 +147,9 @@ def route_collect(request):
             continue
         try:
             Route.objects.create(
-                vrf=vrf, destination=destination, nexthop=nexthop or None,
+                vrf=vrf,
+                destination=destination,
+                nexthop=nexthop or None,
                 interface=interface,
                 protocol=protocol if protocol in dict(Route.PROTOCOL_CHOICES) else "other",
                 metric=int(metric) if metric else 0,
@@ -141,11 +158,17 @@ def route_collect(request):
         except Exception as e:
             errors.append(str(e))
 
-    return Response({
-        "success": True, "device": device.hostname,
-        "api_url": api_url, "vrf": vrf_name,
-        "deleted": old_count, "created": created, "errors": errors,
-    })
+    return Response(
+        {
+            "success": True,
+            "device": device.hostname,
+            "api_url": api_url,
+            "vrf": vrf_name,
+            "deleted": old_count,
+            "created": created,
+            "errors": errors,
+        }
+    )
 
 
 @api_view(["POST"])
@@ -173,6 +196,7 @@ def route_collect_raw(request):
     Route.objects.filter(vrf=vrf).delete()
 
     import re
+
     created = 0
     errors = []
 
@@ -180,10 +204,7 @@ def route_collect_raw(request):
         line = line.strip()
         if not line:
             continue
-        m = re.match(
-            r'^[A-Z*]+\s+(\S+)\s+(?:\[\d+/\d+\]\s+)?(?:via\s+(\S+)|is\s+directly\s+connected,\s+(\S+))',
-            line
-        )
+        m = re.match(r"^[A-Z*]+\s+(\S+)\s+(?:\[\d+/\d+\]\s+)?(?:via\s+(\S+)|is\s+directly\s+connected,\s+(\S+))", line)
         if not m:
             continue
         destination = m.group(1)
@@ -193,17 +214,26 @@ def route_collect_raw(request):
 
         try:
             Route.objects.create(
-                vrf=vrf, destination=destination, nexthop=nexthop if nexthop else None,
-                interface=interface, protocol=protocol,
+                vrf=vrf,
+                destination=destination,
+                nexthop=nexthop if nexthop else None,
+                interface=interface,
+                protocol=protocol,
             )
             created += 1
         except Exception as e:
             errors.append(str(e))
 
-    return Response({
-        "success": True, "device": device.hostname, "vrf": vrf_name,
-        "deleted": old_count, "created": created, "errors": errors,
-    })
+    return Response(
+        {
+            "success": True,
+            "device": device.hostname,
+            "vrf": vrf_name,
+            "deleted": old_count,
+            "created": created,
+            "errors": errors,
+        }
+    )
 
 
 @api_view(["GET"])
@@ -226,9 +256,14 @@ def route_list(request):
 
     data = [
         {
-            "id": r.pk, "device": r.vrf.device.hostname, "vrf": r.vrf.name,
-            "destination": r.destination, "nexthop": r.nexthop,
-            "interface": r.interface, "protocol": r.protocol, "metric": r.metric,
+            "id": r.pk,
+            "device": r.vrf.device.hostname,
+            "vrf": r.vrf.name,
+            "destination": r.destination,
+            "nexthop": r.nexthop,
+            "interface": r.interface,
+            "protocol": r.protocol,
+            "metric": r.metric,
         }
         for r in qs[:500]
     ]
@@ -257,7 +292,7 @@ def dns_query(request):
             resolver.nameservers = [dns_server]
 
         answers = resolver.resolve(domain, record_type)
-        ttl = answers.rrset.ttl if hasattr(answers, 'rrset') else 0
+        ttl = getattr(answers.response.answer[0], "ttl", 0)
         for rdata in answers:
             results.append({"type": record_type, "name": domain, "value": str(rdata), "ttl": str(ttl)})
     except ImportError:
@@ -265,6 +300,7 @@ def dns_query(request):
         if record_type not in ("A", "AAAA"):
             return Response({"error": "dnspython 未安装，仅支持 A/AAAA 查询"}, status=501)
         import socket
+
         try:
             infos = socket.getaddrinfo(domain, None, socket.AF_INET if record_type == "A" else socket.AF_INET6)
             seen = set()

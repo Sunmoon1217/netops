@@ -156,16 +156,22 @@ async function queryBatch(names: string[]) {
     <div class="result-area">
       <el-alert v-if="error" type="error" :closable="false" style="margin-bottom: 12px;">{{ error }}</el-alert>
 
-      <!-- 单次查询结果 -->
+      <!-- 单次查询结果（左右对比） -->
       <template v-if="mode === 'single' && results.length">
-        <div v-for="(group, idx) in results" :key="idx" class="server-result">
-          <div v-if="results.length > 1" class="server-name">{{ group.server }}</div>
-          <el-alert v-if="group.error" type="warning" :closable="false" style="margin-bottom: 8px;">{{ group.error }}</el-alert>
-          <el-table v-if="group.records.length" :data="group.records" stripe border size="small" style="width: 100%">
-            <el-table-column prop="type" label="类型" width="80" />
-            <el-table-column prop="value" label="值" min-width="200" />
-            <el-table-column prop="ttl" label="TTL" width="80" />
-          </el-table>
+        <div class="compare-grid" :style="{ gridTemplateColumns: `repeat(${results.length}, 1fr)` }">
+          <div v-for="(group, idx) in results" :key="idx" class="compare-col">
+            <div class="compare-header" :class="{ 'col-first': idx === 0, 'col-mid': idx > 0 && idx < results.length - 1, 'col-last': idx === results.length - 1 }">
+              <span class="server-name">{{ group.server }}</span>
+              <el-tag v-if="!group.error" type="success" size="small">{{ group.records.length }} 条</el-tag>
+              <el-tag v-else type="danger" size="small">失败</el-tag>
+            </div>
+            <el-alert v-if="group.error" type="warning" :closable="false" style="margin: 0 0 8px 0;">{{ group.error }}</el-alert>
+            <el-table v-if="group.records.length" :data="group.records" stripe size="small" style="width: 100%">
+              <el-table-column prop="type" label="类型" width="70" />
+              <el-table-column prop="value" label="值" min-width="140" />
+              <el-table-column prop="ttl" label="TTL" width="60" />
+            </el-table>
+          </div>
         </div>
       </template>
 
@@ -191,8 +197,13 @@ async function queryBatch(names: string[]) {
 .server-label { font-size: 12px; color: var(--el-text-color-secondary); flex-shrink: 0; }
 .batch-bar { margin-bottom: 12px; flex-shrink: 0; }
 .result-area { flex: 1; min-height: 0; overflow: auto; }
-.server-result { margin-bottom: 16px; }
-.server-name { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--el-color-primary); }
+.compare-grid { display: grid; gap: 16px; margin-bottom: 16px; }
+.compare-col { background: #fff; border-radius: 8px; border: 1px solid var(--el-border-color-lighter); overflow: hidden; }
+.compare-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--el-fill-color-light); border-bottom: 1px solid var(--el-border-color-lighter); }
+.compare-header.col-first { border-radius: 8px 0 0 0; }
+.compare-header.col-mid { border-radius: 0; }
+.compare-header.col-last { border-radius: 0 8px 0 0; }
+.server-name { font-size: 13px; font-weight: 600; color: var(--el-color-primary); }
 .stats-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
 .stat-card { flex: 1; min-width: 100px; text-align: center; }
 .stat-card :deep(.el-card__body) { padding: 14px 10px; }
