@@ -189,35 +189,42 @@ onMounted(calculate)
 
 <template>
   <PageLayout title="子网计算器">
-    <template #actions>
-      <el-input v-model="input" placeholder="IP/CIDR (IPv4 或 IPv6)" style="width: 240px" @keyup.enter="calculate" />
-      <el-input-number v-if="ipVersion === 4" v-model="splitCount" :min="2" :max="32" placeholder="拆分数" controls-position="right" style="width: 120px" />
-      <el-button type="primary" @click="calculate">计算</el-button>
-    </template>
-    <div class="calc-body">
-      <el-alert v-if="error" type="error" :closable="false" style="margin-bottom: 12px;">{{ error }}</el-alert>
-      <div v-if="results.length" class="result-grid">
-        <template v-for="(item, idx) in results" :key="idx">
-          <div v-if="item.isDivider" class="divider" />
-          <div v-else-if="item.isHeader" class="result-header">{{ item.label }}</div>
-          <template v-else>
-            <div class="result-label" :class="{ 'split-label': item.isSplit }">
-              {{ item.label }}
-              <span v-if="item.hint" class="hint">{{ item.hint }}</span>
-            </div>
-            <div class="result-value" :class="{ 'split-value': item.isSplit }">
-              <span>{{ item.value }}</span>
-              <span v-if="item.extra" class="extra">{{ item.extra }}</span>
-            </div>
+    <div class="calc-layout">
+      <!-- 左侧输入区 -->
+      <div class="calc-input">
+        <el-input v-model="input" placeholder="IP/CIDR (IPv4 或 IPv6)" @keyup.enter="calculate" />
+        <el-input-number v-if="ipVersion === 4" v-model="splitCount" :min="2" :max="32" placeholder="拆分数" controls-position="right" style="width: 100%;" />
+        <el-button type="primary" style="width: 100%;" @click="calculate">计算</el-button>
+        <el-alert v-if="error" type="error" :closable="false" style="margin-top: 8px;">{{ error }}</el-alert>
+      </div>
+      <!-- 右侧结果区 -->
+      <div class="calc-result">
+        <el-empty v-if="!results.length && !error" description="输入 IP/CIDR 后点击计算" />
+        <div v-if="results.length" class="result-grid">
+          <template v-for="(item, idx) in results" :key="idx">
+            <div v-if="item.isDivider" class="divider" />
+            <div v-else-if="item.isHeader" class="result-header">{{ item.label }}</div>
+            <template v-else>
+              <div class="result-label" :class="{ 'split-label': item.isSplit }">
+                {{ item.label }}
+                <span v-if="item.hint" class="hint">{{ item.hint }}</span>
+              </div>
+              <div class="result-value" :class="{ 'split-value': item.isSplit }">
+                <span>{{ item.value }}</span>
+                <span v-if="item.extra" class="extra">{{ item.extra }}</span>
+              </div>
+            </template>
           </template>
-        </template>
+        </div>
       </div>
     </div>
   </PageLayout>
 </template>
 
 <style scoped>
-.calc-body { background: #fff; border-radius: 8px; padding: 24px; max-width: 640px; }
+.calc-layout { display: flex; gap: 20px; height: 100%; }
+.calc-input { width: 260px; flex-shrink: 0; background: #fff; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.calc-result { flex: 1; min-width: 0; background: #fff; border-radius: 8px; padding: 24px; overflow: auto; }
 .result-grid { display: grid; grid-template-columns: 120px 1fr; gap: 8px 16px; }
 .result-label { font-size: 13px; color: var(--el-text-color-secondary); font-family: monospace; }
 .result-value { font-size: 13px; font-weight: 600; font-family: monospace; }
