@@ -115,23 +115,64 @@ function calcIPv4() {
 function calcIPv6() {
   const parts = input.value.trim().split('/')
   if (parts.length !== 2) { error.value = '格式: IPv6/CIDR (如 2001:db8::/32)'; return }
+  const ip = parts[0]
   const prefix = parseInt(parts[1])
   if (isNaN(prefix) || prefix < 0 || prefix > 128) { error.value = 'CIDR 范围: 0-128'; return }
-  const expanded = expandIPv6(parts[0])
+  const expanded = expandIPv6(ip)
   if (!expanded) { error.value = '无效 IPv6 地址'; return }
-  const hostBits = 128 - prefix
-  const totalHosts = hostBits <= 53 ? (BigInt(2) ** BigInt(hostBits)).toLocaleString() : `2^${hostBits}`
+
   const addrBigInt = ipv6ToBigInt(expanded)
   const maskBigInt = prefix === 0 ? 0n : ((1n << 128n) - (1n << BigInt(128 - prefix)))
   const networkBigInt = addrBigInt & maskBigInt
+  const hostBits = 128 - prefix
+  const totalHosts = hostBits <= 53 ? (BigInt(2) ** BigInt(hostBits)).toLocaleString() : `2^${hostBits}`
+
+  // 首末地址
+  const firstAddr = networkBigInt
+  const lastAddr = prefix === 0 ? (1n << 128n) - 1n : networkBigInt | ((1n << BigInt(hostBits)) - 1n)
+
+  // PTR 反向域名（取前缀对应的 nibble）
+  const networkHex = bigIntToIPv6(networkBigInt).replace(/:/g, '')
+  const nibbleCount = Math.ceil(prefix / 4)
+  const ptrParts = networkHex.slice(0, nibbleCount).split('').reverse().join('.')
+  const ptrZone = prefix >= 128 ? `${ptrParts}.ip6.arpa` : `${ptrParts}.ip6.arpa (前 ${prefix} 位)`
+
+  // IPv4 映射检测
+  const ipv4Mapped = ip.toLowerCase().startsWith('::ffff:')
+    ? `是 → ${ip.slice(7)}`
+    : '否'
+
   results.value.push(
-    { label: '地址类型', value: ipv6Type(parts[0]) },
+    { label: '地址类型', value: ipv6Type(ip) },
+    { label: '地址范围', value: ipv6Scope(ip) },
+    { label: '压缩格式', value: compressIPv6(expanded) },
     { label: '展开格式', value: expanded },
-    { label: '网络地址', value: bigIntToIPv6(networkBigInt) },
+    { label: 'IPv4 映射', value: ipv4Mapped },
     { label: 'CIDR 前缀', value: `/${prefix}` },
+    { label: '网络地址', value: compressIPv6(bigIntToIPv6(networkBigInt)) },
+    { label: '首可用 IP', value: compressIPv6(bigIntToIPv6(firstAddr)) },
+    { label: '末可用 IP', value: compressIPv6(bigIntToIPv6(lastAddr)) },
     { label: '主机位数', value: hostBits.toString() },
     { label: '总 IP 数', value: totalHosts },
+    { label: 'PTR 域名', value: ptrZone },
   )
+
+  // 子网拆分
+  if (splitCount.value && splitCount.value > 1 && prefix < 64) {
+    const newPrefix = prefix + Math.ceil(Math.log2(splitCount.value))
+    if (newPrefix > 64) { error.value = 'IPv6 拆分建议不超过 /64'; return }
+    const blockSize = 1n << BigInt(128 - newPrefix)
+    results.value.push({ isDivider: true })
+    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix} 子网` })
+    for (let i = 0; i < Math.min(splitCount.value, 16); i++) {
+      const subNet = networkBigInt + BigInt(i) * blockSize
+      results.value.push({
+        isSplit: true,
+        label: compressIPv6(bigIntToIPv6(subNet)) + `/${newPrefix}`,
+        value: `范围: ${compressIPv6(bigIntToIPv6(subNet))} — ${compressIPv6(bigIntToIPv6(subNet + blockSize - 1n))}`,
+      })
+    }
+  }
 }
 
 function ipv4ToNum(ip: string): number | null {
@@ -151,6 +192,46 @@ function expandIPv6(ip: string): string | null {
 }
 function ipv6ToBigInt(e: string): bigint { let r = 0n; for (const g of e.split(':')) r = (r << 16n) | BigInt(parseInt(g, 16)); return r }
 function bigIntToIPv6(n: bigint): string { const g: string[] = []; for (let i = 7; i >= 0; i--) g.push(((n >> BigInt(i * 16)) & 0xffffn).toString(16).padStart(4, '0')); return g.join(':') }
+function compressIPv6(expanded: string): string {
+  // 将展开格式压缩为最短形式
+  const groups = expanded.split(':')
+  // 去掉前导零
+  const stripped = groups.map(g => g.replace(/^0+/, '') || '0')
+  // 找最长连续零段
+  let bestStart = -1, bestLen = 0, curStart = -1, curLen = 0
+  for (let i = 0; i < 8; i++) {
+    if (stripped[i] === '0') {
+      if (curStart === -1) curStart = i
+      curLen = i - curStart + 1
+      if (curLen > bestLen) { bestStart = curStart; bestLen = curLen }
+    } else {
+      curStart = -1; curLen = 0
+    }
+  }
+  if (bestLen >= 2) {
+    const left = stripped.slice(0, bestStart).join(':')
+    const right = stripped.slice(bestStart + bestLen).join(':')
+    return left + '::' + right
+  }
+  return stripped.join(':')
+}
+
+function ipv6Scope(ip: string): string {
+  const lower = ip.toLowerCase()
+  if (lower === '::1') return '仅本机'
+  if (lower.startsWith('fe80')) return '链路本地 (Link-local)'
+  if (lower.startsWith('fc') || lower.startsWith('fd')) return '站点本地 (Site-local / ULA)'
+  if (lower.startsWith('ff02::1')) return '所有节点 (All-nodes)'
+  if (lower.startsWith('ff02::2')) return '所有路由器 (All-routers)'
+  if (lower.startsWith('ff')) return '组播 (Multicast)'
+  if (lower.startsWith('2001:db8')) return '文档示例 (Documentation)'
+  if (lower.startsWith('2001:')) return '全球单播 (Global Unicast)'
+  if (lower.startsWith('::ffff:')) return 'IPv4 映射'
+  if (lower.startsWith('64:ff9b')) return 'IPv4/IPv6 翻译'
+  if (lower.startsWith('2002:')) return '6to4 隧道'
+  return '全球单播 (Global Unicast)'
+}
+
 function ipv6Type(ip: string): string {
   const l = ip.toLowerCase()
   if (l.startsWith('::1')) return '环回地址'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '唯一本地 (ULA)'
@@ -170,7 +251,7 @@ onMounted(calculate)
     <div class="input-bar">
       <el-segmented v-model="ipVer" :options="[{ label: 'IPv4', value: 'v4' }, { label: 'IPv6', value: 'v6' }]" size="small" @change="resetResults" />
       <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 220px" @keyup.enter="calculate" />
-      <el-input-number v-if="ipVer === 'v4'" v-model="splitCount" :min="2" :max="32" placeholder="拆分数" controls-position="right" style="width: 110px" />
+      <el-input-number v-model="splitCount" :min="2" :max="32" placeholder="拆分数" controls-position="right" style="width: 110px" />
       <el-button type="primary" @click="calculate">计算</el-button>
 
       <el-divider v-if="ipVer === 'v4'" direction="vertical" />
