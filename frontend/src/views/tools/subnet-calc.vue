@@ -11,15 +11,15 @@ const maskResults = ref<any[]>([])
 const hostResults = ref<any[]>([])
 const error = ref('')
 
+function switchVer() {
+  input.value = ipVer.value === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'
+  results.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
+  splitCount.value = null; hostCount.value = null; maskInput.value = ''
+}
+
 function calculate() {
-  error.value = ''
-  results.value = []
-  try {
-    if (ipVer.value === 'v6') calcIPv6()
-    else calcIPv4()
-  } catch (e: any) {
-    error.value = e.message || '计算错误'
-  }
+  error.value = ''; results.value = []
+  try { ipVer.value === 'v6' ? calcIPv6() : calcIPv4() } catch (e: any) { error.value = e.message || '计算错误' }
 }
 
 function calcMask() {
@@ -91,11 +91,11 @@ function calcIPv4() {
     { label: '广播地址', value: numToIPv4(broadcast) },
     { label: '子网掩码', value: `${numToIPv4(mask)}  /${prefix}` },
     { label: '通配符掩码', value: numToIPv4(wildcard) },
-    { label: '十六进制掩码', value: '0x' + (mask >>> 0).toString(16).toUpperCase().padStart(8, '0') },
-    { label: '总 IP 数', value: totalHosts.toLocaleString() },
-    { label: '可用 IP 数', value: usable.toLocaleString() },
-    { label: '首可用 IP', value: totalHosts >= 2 ? numToIPv4(network + 1) : '-' },
-    { label: '末可用 IP', value: totalHosts >= 2 ? numToIPv4(broadcast - 1) : '-' },
+    { label: '十六进制', value: '0x' + (mask >>> 0).toString(16).toUpperCase().padStart(8, '0') },
+    { label: '总 IP', value: totalHosts.toLocaleString() },
+    { label: '可用 IP', value: usable.toLocaleString() },
+    { label: '首可用', value: totalHosts >= 2 ? numToIPv4(network + 1) : '-' },
+    { label: '末可用', value: totalHosts >= 2 ? numToIPv4(broadcast - 1) : '-' },
     { label: '二进制掩码', value: numToBinary(mask) },
   )
   if (splitCount.value && splitCount.value > 1) {
@@ -103,7 +103,7 @@ function calcIPv4() {
     if (newPrefix > 32) { error.value = '拆分数超出 CIDR 范围'; return }
     const blockSize = Math.pow(2, 32 - newPrefix)
     results.value.push({ isDivider: true })
-    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix} 子网` })
+    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix}` })
     for (let i = 0; i < Math.min(splitCount.value, 32); i++) {
       const subNet = (network + i * blockSize) >>> 0
       const subBcast = (subNet + blockSize - 1) >>> 0
@@ -120,203 +120,131 @@ function calcIPv6() {
   if (isNaN(prefix) || prefix < 0 || prefix > 128) { error.value = 'CIDR 范围: 0-128'; return }
   const expanded = expandIPv6(ip)
   if (!expanded) { error.value = '无效 IPv6 地址'; return }
-
   const addrBigInt = ipv6ToBigInt(expanded)
   const maskBigInt = prefix === 0 ? 0n : ((1n << 128n) - (1n << BigInt(128 - prefix)))
   const networkBigInt = addrBigInt & maskBigInt
   const hostBits = 128 - prefix
   const totalHosts = hostBits <= 53 ? (BigInt(2) ** BigInt(hostBits)).toLocaleString() : `2^${hostBits}`
-
-  // 首末地址
-  const firstAddr = networkBigInt
   const lastAddr = prefix === 0 ? (1n << 128n) - 1n : networkBigInt | ((1n << BigInt(hostBits)) - 1n)
-
-  // PTR 反向域名（取前缀对应的 nibble）
   const networkHex = bigIntToIPv6(networkBigInt).replace(/:/g, '')
   const nibbleCount = Math.ceil(prefix / 4)
   const ptrParts = networkHex.slice(0, nibbleCount).split('').reverse().join('.')
-  const ptrZone = prefix >= 128 ? `${ptrParts}.ip6.arpa` : `${ptrParts}.ip6.arpa (前 ${prefix} 位)`
-
-  // IPv4 映射检测
-  const ipv4Mapped = ip.toLowerCase().startsWith('::ffff:')
-    ? `是 → ${ip.slice(7)}`
-    : '否'
 
   results.value.push(
     { label: '地址类型', value: ipv6Type(ip) },
     { label: '地址范围', value: ipv6Scope(ip) },
     { label: '压缩格式', value: compressIPv6(expanded) },
     { label: '展开格式', value: expanded },
-    { label: 'IPv4 映射', value: ipv4Mapped },
+    { label: 'IPv4 映射', value: ip.toLowerCase().startsWith('::ffff:') ? `是 → ${ip.slice(7)}` : '否' },
     { label: 'CIDR 前缀', value: `/${prefix}` },
     { label: '网络地址', value: compressIPv6(bigIntToIPv6(networkBigInt)) },
-    { label: '首可用 IP', value: compressIPv6(bigIntToIPv6(firstAddr)) },
+    { label: '首可用 IP', value: compressIPv6(bigIntToIPv6(networkBigInt)) },
     { label: '末可用 IP', value: compressIPv6(bigIntToIPv6(lastAddr)) },
     { label: '主机位数', value: hostBits.toString() },
     { label: '总 IP 数', value: totalHosts },
-    { label: 'PTR 域名', value: ptrZone },
+    { label: 'PTR 域名', value: `${ptrParts}.ip6.arpa` },
   )
-
-  // 子网拆分
   if (splitCount.value && splitCount.value > 1 && prefix < 64) {
     const newPrefix = prefix + Math.ceil(Math.log2(splitCount.value))
     if (newPrefix > 64) { error.value = 'IPv6 拆分建议不超过 /64'; return }
     const blockSize = 1n << BigInt(128 - newPrefix)
     results.value.push({ isDivider: true })
-    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix} 子网` })
+    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix}` })
     for (let i = 0; i < Math.min(splitCount.value, 16); i++) {
       const subNet = networkBigInt + BigInt(i) * blockSize
-      results.value.push({
-        isSplit: true,
-        label: compressIPv6(bigIntToIPv6(subNet)) + `/${newPrefix}`,
-        value: `范围: ${compressIPv6(bigIntToIPv6(subNet))} — ${compressIPv6(bigIntToIPv6(subNet + blockSize - 1n))}`,
-      })
+      results.value.push({ isSplit: true, label: `${compressIPv6(bigIntToIPv6(subNet))}/${newPrefix}`, value: `${compressIPv6(bigIntToIPv6(subNet))} — ${compressIPv6(bigIntToIPv6(subNet + blockSize - 1n))}` })
     }
   }
 }
 
-function ipv4ToNum(ip: string): number | null {
-  const parts = ip.split('.'); if (parts.length !== 4) return null
-  let num = 0; for (const p of parts) { const n = parseInt(p); if (isNaN(n) || n < 0 || n > 255) return null; num = (num << 8 | n) >>> 0 }; return num
-}
-function numToIPv4(num: number): string { return [(num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff].join('.') }
-function numToBinary(num: number): string { return [(num >>> 24) & 0xff, (num >>> 16) & 0xff, (num >>> 8) & 0xff, num & 0xff].map(b => b.toString(2).padStart(8, '0')).join('.') }
-function ipv4Type(num: number): string {
-  const a = (num >>> 24) & 0xff, b = (num >>> 16) & 0xff
-  if (a === 127) return '环回地址'; if (a === 10) return 'A 类私有'; if (a === 172 && b >= 16 && b <= 31) return 'B 类私有'
-  if (a === 192 && b === 168) return 'C 类私有'; if (a === 169 && b === 254) return '链路本地'
-  if (a >= 224 && a <= 239) return '组播地址'; if (a >= 240) return '保留地址'; return '公网地址'
-}
-function expandIPv6(ip: string): string | null {
-  try { let e = ip; if (e.includes('::')) { const p = e.split('::'); const l = p[0] ? p[0].split(':') : []; const r = p[1] ? p[1].split(':') : []; e = [...l, ...Array(8 - l.length - r.length).fill('0'), ...r].join(':') }; return e.split(':').map(g => g.padStart(4, '0')).join(':') } catch { return null }
-}
+// --- 工具函数 ---
+function ipv4ToNum(ip: string): number | null { const p = ip.split('.'); if (p.length !== 4) return null; let n = 0; for (const s of p) { const v = parseInt(s); if (isNaN(v) || v < 0 || v > 255) return null; n = (n << 8 | v) >>> 0 }; return n }
+function numToIPv4(n: number): string { return [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].join('.') }
+function numToBinary(n: number): string { return [(n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff].map(b => b.toString(2).padStart(8, '0')).join('.') }
+function ipv4Type(n: number): string { const a = (n >>> 24) & 0xff, b = (n >>> 16) & 0xff; if (a === 127) return '环回地址'; if (a === 10) return 'A 类私有'; if (a === 172 && b >= 16 && b <= 31) return 'B 类私有'; if (a === 192 && b === 168) return 'C 类私有'; if (a === 169 && b === 254) return '链路本地'; if (a >= 224 && a <= 239) return '组播地址'; if (a >= 240) return '保留地址'; return '公网地址' }
+function expandIPv6(ip: string): string | null { try { let e = ip; if (e.includes('::')) { const p = e.split('::'); const l = p[0] ? p[0].split(':') : []; const r = p[1] ? p[1].split(':') : []; e = [...l, ...Array(8 - l.length - r.length).fill('0'), ...r].join(':') }; return e.split(':').map(g => g.padStart(4, '0')).join(':') } catch { return null } }
+function compressIPv6(e: string): string { const g = e.split(':').map(s => s.replace(/^0+/, '') || '0'); let bs = -1, bl = 0, cs = -1, cl = 0; for (let i = 0; i < 8; i++) { if (g[i] === '0') { if (cs === -1) cs = i; cl = i - cs + 1; if (cl > bl) { bs = cs; bl = cl } } else { cs = -1; cl = 0 } } if (bl >= 2) return g.slice(0, bs).join(':') + '::' + g.slice(bs + bl).join(':'); return g.join(':') }
 function ipv6ToBigInt(e: string): bigint { let r = 0n; for (const g of e.split(':')) r = (r << 16n) | BigInt(parseInt(g, 16)); return r }
 function bigIntToIPv6(n: bigint): string { const g: string[] = []; for (let i = 7; i >= 0; i--) g.push(((n >> BigInt(i * 16)) & 0xffffn).toString(16).padStart(4, '0')); return g.join(':') }
-function compressIPv6(expanded: string): string {
-  // 将展开格式压缩为最短形式
-  const groups = expanded.split(':')
-  // 去掉前导零
-  const stripped = groups.map(g => g.replace(/^0+/, '') || '0')
-  // 找最长连续零段
-  let bestStart = -1, bestLen = 0, curStart = -1, curLen = 0
-  for (let i = 0; i < 8; i++) {
-    if (stripped[i] === '0') {
-      if (curStart === -1) curStart = i
-      curLen = i - curStart + 1
-      if (curLen > bestLen) { bestStart = curStart; bestLen = curLen }
-    } else {
-      curStart = -1; curLen = 0
-    }
-  }
-  if (bestLen >= 2) {
-    const left = stripped.slice(0, bestStart).join(':')
-    const right = stripped.slice(bestStart + bestLen).join(':')
-    return left + '::' + right
-  }
-  return stripped.join(':')
-}
-
-function ipv6Scope(ip: string): string {
-  const lower = ip.toLowerCase()
-  if (lower === '::1') return '仅本机'
-  if (lower.startsWith('fe80')) return '链路本地 (Link-local)'
-  if (lower.startsWith('fc') || lower.startsWith('fd')) return '站点本地 (Site-local / ULA)'
-  if (lower.startsWith('ff02::1')) return '所有节点 (All-nodes)'
-  if (lower.startsWith('ff02::2')) return '所有路由器 (All-routers)'
-  if (lower.startsWith('ff')) return '组播 (Multicast)'
-  if (lower.startsWith('2001:db8')) return '文档示例 (Documentation)'
-  if (lower.startsWith('2001:')) return '全球单播 (Global Unicast)'
-  if (lower.startsWith('::ffff:')) return 'IPv4 映射'
-  if (lower.startsWith('64:ff9b')) return 'IPv4/IPv6 翻译'
-  if (lower.startsWith('2002:')) return '6to4 隧道'
-  return '全球单播 (Global Unicast)'
-}
-
-function ipv6Type(ip: string): string {
-  const l = ip.toLowerCase()
-  if (l.startsWith('::1')) return '环回地址'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '唯一本地 (ULA)'
-  if (l.startsWith('ff')) return '组播地址'; if (l.startsWith('2001:db8')) return '文档地址'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; return '全局单播'
-}
-
-function resetResults() {
-  input.value = ipVer.value === "v4" ? "10.0.0.0/24" : "2001:db8::/32"
-  results.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
-}
-
-onMounted(calculate)
+function ipv6Type(ip: string): string { const l = ip.toLowerCase(); if (l.startsWith('::1')) return '环回地址'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '唯一本地 (ULA)'; if (l.startsWith('ff')) return '组播地址'; if (l.startsWith('2001:db8')) return '文档地址'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; return '全局单播' }
+function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '::1') return '仅本机'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '站点本地 (ULA)'; if (l.startsWith('ff02::1')) return '所有节点'; if (l.startsWith('ff02::2')) return '所有路由器'; if (l.startsWith('ff')) return '组播'; if (l.startsWith('2001:db8')) return '文档示例'; if (l.startsWith('2001:')) return '全球单播'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; if (l.startsWith('64:ff9b')) return 'IPv4/IPv6 翻译'; if (l.startsWith('2002:')) return '6to4 隧道'; return '全球单播' }
 </script>
 
 <template>
   <PageLayout title="子网计算器">
-    <!-- 输入区 -->
-    <div class="input-bar">
-      <el-segmented v-model="ipVer" :options="[{ label: 'IPv4', value: 'v4' }, { label: 'IPv6', value: 'v6' }]" size="small" @change="resetResults" />
-      <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 220px" @keyup.enter="calculate" />
-      <el-input-number v-model="splitCount" :min="2" :max="32" placeholder="拆分数" controls-position="right" style="width: 110px" />
-      <el-button type="primary" @click="calculate">计算</el-button>
-
-      <el-divider v-if="ipVer === 'v4'" direction="vertical" />
-
-      <template v-if="ipVer === 'v4'">
-        <el-input v-model="maskInput" placeholder="掩码转换: /24 或 255.255.255.0" style="width: 230px" @keyup.enter="calcMask" />
-        <el-button @click="calcMask">转换</el-button>
-        <el-divider direction="vertical" />
-        <el-input-number v-model="hostCount" :min="1" placeholder="主机数" controls-position="right" style="width: 110px" />
-        <el-button @click="calcHosts">推荐</el-button>
-      </template>
+    <!-- 版本切换 -->
+    <div style="margin-bottom: 20px;">
+      <el-segmented v-model="ipVer" :options="[{ label: 'IPv4', value: 'v4' }, { label: 'IPv6', value: 'v6' }]" size="default" @change="switchVer" />
     </div>
 
-    <el-alert v-if="error" type="error" :closable="false" style="margin-bottom: 12px;">{{ error }}</el-alert>
+    <!-- CIDR 计算 -->
+    <el-form label-width="100px" style="max-width: 680px; margin-bottom: 20px;">
+      <el-form-item label="IP / CIDR">
+        <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" @keyup.enter="calculate" style="width: 280px;" />
+        <el-button type="primary" @click="calculate" style="margin-left: 8px;">计算</el-button>
+      </el-form-item>
+      <el-form-item label="拆分数量">
+        <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" placeholder="可选" controls-position="right" style="width: 160px;" />
+      </el-form-item>
+      <template v-if="ipVer === 'v4'">
+        <el-form-item label="掩码转换">
+          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" @keyup.enter="calcMask" style="width: 280px;" />
+          <el-button @click="calcMask" style="margin-left: 8px;">转换</el-button>
+        </el-form-item>
+        <el-form-item label="主机数反算">
+          <el-input-number v-model="hostCount" :min="1" placeholder="需要的主机数量" controls-position="right" style="width: 160px;" />
+          <el-button @click="calcHosts" style="margin-left: 8px;">推荐掩码</el-button>
+        </el-form-item>
+      </template>
+    </el-form>
 
-    <!-- 结果区 -->
-    <template v-if="results.length || maskResults.length || hostResults.length">
-      <!-- CIDR 结果 -->
-      <div v-if="results.length" class="result-section">
-        <div class="section-title">CIDR 计算结果</div>
-        <div class="result-grid">
-          <template v-for="(item, idx) in results" :key="idx">
-            <div v-if="item.isDivider" class="divider" />
-            <div v-else-if="item.isHeader" class="result-header">{{ item.label }}</div>
-            <template v-else>
-              <div class="result-label">{{ item.label }}</div>
-              <div class="result-value">{{ item.value }}<span v-if="item.extra" class="extra">{{ item.extra }}</span></div>
-            </template>
-          </template>
-        </div>
-      </div>
+    <el-alert v-if="error" type="error" :closable="false" style="margin-bottom: 16px; max-width: 680px;">{{ error }}</el-alert>
 
-      <!-- 掩码转换结果 -->
-      <div v-if="maskResults.length" class="result-section">
-        <div class="section-title">掩码转换</div>
-        <div class="result-grid">
-          <template v-for="(item, idx) in maskResults" :key="'m'+idx">
+    <!-- CIDR 结果 -->
+    <div v-if="results.length" class="result-section">
+      <div class="section-title">CIDR 计算结果</div>
+      <div class="result-grid">
+        <template v-for="(item, idx) in results" :key="idx">
+          <div v-if="item.isDivider" class="divider" />
+          <div v-else-if="item.isHeader" class="result-header">{{ item.label }}</div>
+          <template v-else>
             <div class="result-label">{{ item.label }}</div>
-            <div class="result-value">{{ item.value }}</div>
+            <div class="result-value">{{ item.value }}<span v-if="item.extra" class="extra">{{ item.extra }}</span></div>
           </template>
-        </div>
+        </template>
       </div>
+    </div>
 
-      <!-- 主机数推荐结果 -->
-      <div v-if="hostResults.length" class="result-section">
-        <div class="section-title">主机数推荐掩码</div>
-        <div class="result-grid">
-          <template v-for="(item, idx) in hostResults" :key="'h'+idx">
-            <div class="result-label">{{ item.label }}</div>
-            <div class="result-value">{{ item.value }}</div>
-          </template>
-        </div>
+    <!-- 掩码转换结果 -->
+    <div v-if="maskResults.length" class="result-section">
+      <div class="section-title">掩码转换</div>
+      <div class="result-grid">
+        <template v-for="(item, idx) in maskResults" :key="'m'+idx">
+          <div class="result-label">{{ item.label }}</div>
+          <div class="result-value">{{ item.value }}</div>
+        </template>
       </div>
-    </template>
+    </div>
+
+    <!-- 主机数推荐结果 -->
+    <div v-if="hostResults.length" class="result-section">
+      <div class="section-title">主机数推荐</div>
+      <div class="result-grid">
+        <template v-for="(item, idx) in hostResults" :key="'h'+idx">
+          <div class="result-label">{{ item.label }}</div>
+          <div class="result-value">{{ item.value }}</div>
+        </template>
+      </div>
+    </div>
 
     <el-empty v-if="!results.length && !maskResults.length && !hostResults.length && !error" description="输入参数后点击计算" />
   </PageLayout>
 </template>
 
 <style scoped>
-.input-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
-.result-section { margin-bottom: 20px; }
+.result-section { margin-bottom: 20px; max-width: 680px; }
 .section-title { font-size: 13px; font-weight: 600; color: var(--el-color-primary); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--el-border-color-lighter); }
-.result-grid { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; }
+.result-grid { display: grid; grid-template-columns: 100px 1fr; gap: 6px 16px; }
 .result-label { font-size: 13px; color: var(--el-text-color-secondary); font-family: monospace; }
 .result-value { font-size: 13px; font-weight: 600; font-family: monospace; word-break: break-all; }
 .divider { grid-column: 1 / -1; height: 1px; background: var(--el-border-color-lighter); margin: 6px 0; }
