@@ -181,9 +181,6 @@ onMounted(() => { calculate(); calcMask(); calcHosts() })
         <div class="input-row">
           <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" @keyup.enter="calculate" />
           <el-button type="primary" @click="calculate">计算</el-button>
-          <span class="sep">|</span>
-          <span class="row-label">拆分</span>
-          <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" controls-position="right" style="width: 100px;" />
         </div>
         <el-alert v-if="error" type="error" :closable="false" style="margin-top: 8px;">{{ error }}</el-alert>
         <div v-if="results.length" class="result-grid">
@@ -192,7 +189,14 @@ onMounted(() => { calculate(); calcMask(); calcHosts() })
             <div class="r-value">{{ item.value }}</div>
           </template>
         </div>
-        <table v-if="splits.length" class="split-table">
+          <thead><tr><th>#</th><th>子网</th><th>范围</th><th>可用</th></tr></thead>
+          <tbody><tr v-for="(s, i) in splits" :key="i"><td>{{ i + 1 }}</td><td>{{ s.cidr }}</td><td>{{ s.range }}</td><td>{{ s.hosts }}</td></tr></tbody>
+        <div class="input-row">
+          <span class="row-label">拆分子网</span>
+          <el-input-number v-model="splitCount" :min="2" :max="32" controls-position="right" style="width: 100px;" />
+          <el-button type="primary" @click="calculate">拆分</el-button>
+        </div>
+        <table class="split-table">
           <thead><tr><th>#</th><th>子网</th><th>范围</th><th>可用</th></tr></thead>
           <tbody><tr v-for="(s, i) in splits" :key="i"><td>{{ i + 1 }}</td><td>{{ s.cidr }}</td><td>{{ s.range }}</td><td>{{ s.hosts }}</td></tr></tbody>
         </table>
