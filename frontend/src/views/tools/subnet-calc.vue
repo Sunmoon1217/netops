@@ -7,18 +7,19 @@ const splitCount = ref<number | null>(null)
 const hostCount = ref<number | null>(null)
 const maskInput = ref('')
 const results = ref<any[]>([])
+const splits = ref<any[]>([])
 const maskResults = ref<any[]>([])
 const hostResults = ref<any[]>([])
 const error = ref('')
 
 function switchVer() {
   input.value = ipVer.value === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'
-  results.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
+  results.value = []; splits.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
   splitCount.value = null; hostCount.value = null; maskInput.value = ''
 }
 
 function calculate() {
-  error.value = ''; results.value = []
+  error.value = ''; results.value = []; splits.value = []
   try { ipVer.value === 'v6' ? calcIPv6() : calcIPv4() } catch (e: any) { error.value = e.message || '计算错误' }
 }
 
@@ -60,31 +61,29 @@ function calcHosts() {
   const needed = hostCount.value + 2
   const bits = Math.ceil(Math.log2(needed))
   const prefix = 32 - bits
-  if (prefix < 0) { hostResults.value.push({ label: '错误', value: '超出 IPv4 范围' }); return }
-  const available = Math.pow(2, bits) - 2
+  if (prefix < 0) { hostResults.value.push({ label: '错误', value: '超出范围' }); return }
   const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0
   hostResults.value.push(
-    { label: '需要主机数', value: hostCount.value.toLocaleString() },
     { label: '推荐 CIDR', value: `/${prefix}` },
     { label: '子网掩码', value: numToIPv4(mask) },
-    { label: '实际可用', value: available.toLocaleString() },
+    { label: '实际可用', value: (Math.pow(2, bits) - 2).toLocaleString() },
   )
 }
 
 function calcIPv4() {
   const parts = input.value.trim().split('/')
-  if (parts.length !== 2) { error.value = '格式: IP/CIDR (如 10.0.0.0/24)'; return }
+  if (parts.length !== 2) { error.value = '格式: IP/CIDR'; return }
   const ip = parts[0]
   const prefix = parseInt(parts[1])
   if (isNaN(prefix) || prefix < 0 || prefix > 32) { error.value = 'CIDR 范围: 0-32'; return }
   const ipNum = ipv4ToNum(ip)
-  if (ipNum === null) { error.value = '无效 IPv4 地址'; return }
+  if (ipNum === null) { error.value = '无效 IPv4'; return }
   const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0
   const wildcard = (~mask) >>> 0
   const network = (ipNum & mask) >>> 0
   const broadcast = (network | ~mask) >>> 0
-  const totalHosts = broadcast - network + 1
-  const usable = totalHosts >= 2 ? totalHosts - 2 : totalHosts
+  const total = broadcast - network + 1
+  const usable = total >= 2 ? total - 2 : total
   results.value.push(
     { label: '地址类型', value: ipv4Type(ipNum) },
     { label: '网络地址', value: numToIPv4(network) },
@@ -92,34 +91,32 @@ function calcIPv4() {
     { label: '子网掩码', value: `${numToIPv4(mask)}  /${prefix}` },
     { label: '通配符掩码', value: numToIPv4(wildcard) },
     { label: '十六进制', value: '0x' + (mask >>> 0).toString(16).toUpperCase().padStart(8, '0') },
-    { label: '总 IP', value: totalHosts.toLocaleString() },
+    { label: '总 IP', value: total.toLocaleString() },
     { label: '可用 IP', value: usable.toLocaleString() },
-    { label: '首可用', value: totalHosts >= 2 ? numToIPv4(network + 1) : '-' },
-    { label: '末可用', value: totalHosts >= 2 ? numToIPv4(broadcast - 1) : '-' },
+    { label: '首可用', value: total >= 2 ? numToIPv4(network + 1) : '-' },
+    { label: '末可用', value: total >= 2 ? numToIPv4(broadcast - 1) : '-' },
     { label: '二进制掩码', value: numToBinary(mask) },
   )
   if (splitCount.value && splitCount.value > 1) {
     const newPrefix = prefix + Math.ceil(Math.log2(splitCount.value))
-    if (newPrefix > 32) { error.value = '拆分数超出 CIDR 范围'; return }
+    if (newPrefix > 32) { error.value = '拆分数超出范围'; return }
     const blockSize = Math.pow(2, 32 - newPrefix)
-    results.value.push({ isDivider: true })
-    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix}` })
     for (let i = 0; i < Math.min(splitCount.value, 32); i++) {
       const subNet = (network + i * blockSize) >>> 0
       const subBcast = (subNet + blockSize - 1) >>> 0
-      results.value.push({ isSplit: true, label: `${numToIPv4(subNet)}/${newPrefix}`, value: `${numToIPv4(subNet + 1)} — ${numToIPv4(subBcast - 1)}`, extra: `${(blockSize - 2).toLocaleString()} 可用` })
+      splits.value.push({ cidr: `${numToIPv4(subNet)}/${newPrefix}`, range: `${numToIPv4(subNet + 1)} — ${numToIPv4(subBcast - 1)}`, hosts: (blockSize - 2).toLocaleString() })
     }
   }
 }
 
 function calcIPv6() {
   const parts = input.value.trim().split('/')
-  if (parts.length !== 2) { error.value = '格式: IPv6/CIDR (如 2001:db8::/32)'; return }
+  if (parts.length !== 2) { error.value = '格式: IPv6/CIDR'; return }
   const ip = parts[0]
   const prefix = parseInt(parts[1])
   if (isNaN(prefix) || prefix < 0 || prefix > 128) { error.value = 'CIDR 范围: 0-128'; return }
   const expanded = expandIPv6(ip)
-  if (!expanded) { error.value = '无效 IPv6 地址'; return }
+  if (!expanded) { error.value = '无效 IPv6'; return }
   const addrBigInt = ipv6ToBigInt(expanded)
   const maskBigInt = prefix === 0 ? 0n : ((1n << 128n) - (1n << BigInt(128 - prefix)))
   const networkBigInt = addrBigInt & maskBigInt
@@ -129,7 +126,6 @@ function calcIPv6() {
   const networkHex = bigIntToIPv6(networkBigInt).replace(/:/g, '')
   const nibbleCount = Math.ceil(prefix / 4)
   const ptrParts = networkHex.slice(0, nibbleCount).split('').reverse().join('.')
-
   results.value.push(
     { label: '地址类型', value: ipv6Type(ip) },
     { label: '地址范围', value: ipv6Scope(ip) },
@@ -148,11 +144,9 @@ function calcIPv6() {
     const newPrefix = prefix + Math.ceil(Math.log2(splitCount.value))
     if (newPrefix > 64) { error.value = 'IPv6 拆分建议不超过 /64'; return }
     const blockSize = 1n << BigInt(128 - newPrefix)
-    results.value.push({ isDivider: true })
-    results.value.push({ isHeader: true, label: `拆分为 ${splitCount.value} 个 /${newPrefix}` })
     for (let i = 0; i < Math.min(splitCount.value, 16); i++) {
       const subNet = networkBigInt + BigInt(i) * blockSize
-      results.value.push({ isSplit: true, label: `${compressIPv6(bigIntToIPv6(subNet))}/${newPrefix}`, value: `${compressIPv6(bigIntToIPv6(subNet))} — ${compressIPv6(bigIntToIPv6(subNet + blockSize - 1n))}` })
+      splits.value.push({ cidr: `${compressIPv6(bigIntToIPv6(subNet))}/${newPrefix}`, range: `${compressIPv6(bigIntToIPv6(subNet))} — ${compressIPv6(bigIntToIPv6(subNet + blockSize - 1n))}`, hosts: '' })
     }
   }
 }
@@ -172,82 +166,78 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
 
 <template>
   <PageLayout title="子网计算器">
-    <!-- 版本切换 -->
-    <div style="margin-bottom: 20px;">
-      <el-segmented v-model="ipVer" :options="[{ label: 'IPv4', value: 'v4' }, { label: 'IPv6', value: 'v6' }]" size="default" @change="switchVer" />
-    </div>
+    <div class="calc-body">
+      <!-- 版本切换 -->
+      <div class="ver-switch">
+        <el-segmented v-model="ipVer" :options="[{ label: 'IPv4', value: 'v4' }, { label: 'IPv6', value: 'v6' }]" @change="switchVer" />
+      </div>
 
-    <!-- CIDR 计算 -->
-    <el-form label-width="100px" style="max-width: 680px; margin-bottom: 20px;">
-      <el-form-item label="IP / CIDR">
-        <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" @keyup.enter="calculate" style="width: 280px;" />
-        <el-button type="primary" @click="calculate" style="margin-left: 8px;">计算</el-button>
-      </el-form-item>
-      <el-form-item label="拆分数量">
-        <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" placeholder="可选" controls-position="right" style="width: 160px;" />
-      </el-form-item>
-      <template v-if="ipVer === 'v4'">
-        <el-form-item label="掩码转换">
-          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" @keyup.enter="calcMask" style="width: 280px;" />
-          <el-button @click="calcMask" style="margin-left: 8px;">转换</el-button>
-        </el-form-item>
-        <el-form-item label="主机数反算">
-          <el-input-number v-model="hostCount" :min="1" placeholder="需要的主机数量" controls-position="right" style="width: 160px;" />
-          <el-button @click="calcHosts" style="margin-left: 8px;">推荐掩码</el-button>
-        </el-form-item>
-      </template>
-    </el-form>
-
-    <el-alert v-if="error" type="error" :closable="false" style="margin-bottom: 16px; max-width: 680px;">{{ error }}</el-alert>
-
-    <!-- CIDR 结果 -->
-    <div v-if="results.length" class="result-section">
-      <div class="section-title">CIDR 计算结果</div>
-      <div class="result-grid">
-        <template v-for="(item, idx) in results" :key="idx">
-          <div v-if="item.isDivider" class="divider" />
-          <div v-else-if="item.isHeader" class="result-header">{{ item.label }}</div>
-          <template v-else>
-            <div class="result-label">{{ item.label }}</div>
-            <div class="result-value">{{ item.value }}<span v-if="item.extra" class="extra">{{ item.extra }}</span></div>
+      <!-- CIDR 计算 + 结果 -->
+      <div class="section">
+        <div class="input-row">
+          <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" @keyup.enter="calculate" />
+          <el-button type="primary" @click="calculate">计算</el-button>
+          <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" placeholder="拆分数" controls-position="right" style="width: 110px;" />
+        </div>
+        <el-alert v-if="error" type="error" :closable="false" style="margin-top: 8px;">{{ error }}</el-alert>
+        <div v-if="results.length" class="result-grid">
+          <template v-for="(item, idx) in results" :key="idx">
+            <div class="r-label">{{ item.label }}</div>
+            <div class="r-value">{{ item.value }}</div>
           </template>
-        </template>
+        </div>
+        <table v-if="splits.length" class="split-table">
+          <thead><tr><th>#</th><th>子网</th><th>范围</th><th>可用</th></tr></thead>
+          <tbody>
+            <tr v-for="(s, i) in splits" :key="i"><td>{{ i + 1 }}</td><td>{{ s.cidr }}</td><td>{{ s.range }}</td><td>{{ s.hosts }}</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 掩码转换（仅 IPv4） -->
+      <div v-if="ipVer === 'v4'" class="section">
+        <div class="input-row">
+          <span class="row-label">掩码转换</span>
+          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" style="width: 260px;" @keyup.enter="calcMask" />
+          <el-button @click="calcMask">转换</el-button>
+        </div>
+        <div v-if="maskResults.length" class="result-grid">
+          <template v-for="(item, idx) in maskResults" :key="'m'+idx">
+            <div class="r-label">{{ item.label }}</div>
+            <div class="r-value">{{ item.value }}</div>
+          </template>
+        </div>
+      </div>
+
+      <!-- 主机数反算（仅 IPv4） -->
+      <div v-if="ipVer === 'v4'" class="section">
+        <div class="input-row">
+          <span class="row-label">主机数反算</span>
+          <el-input-number v-model="hostCount" :min="1" placeholder="主机数" controls-position="right" style="width: 140px;" />
+          <el-button @click="calcHosts">推荐掩码</el-button>
+        </div>
+        <div v-if="hostResults.length" class="result-grid">
+          <template v-for="(item, idx) in hostResults" :key="'h'+idx">
+            <div class="r-label">{{ item.label }}</div>
+            <div class="r-value">{{ item.value }}</div>
+          </template>
+        </div>
       </div>
     </div>
-
-    <!-- 掩码转换结果 -->
-    <div v-if="maskResults.length" class="result-section">
-      <div class="section-title">掩码转换</div>
-      <div class="result-grid">
-        <template v-for="(item, idx) in maskResults" :key="'m'+idx">
-          <div class="result-label">{{ item.label }}</div>
-          <div class="result-value">{{ item.value }}</div>
-        </template>
-      </div>
-    </div>
-
-    <!-- 主机数推荐结果 -->
-    <div v-if="hostResults.length" class="result-section">
-      <div class="section-title">主机数推荐</div>
-      <div class="result-grid">
-        <template v-for="(item, idx) in hostResults" :key="'h'+idx">
-          <div class="result-label">{{ item.label }}</div>
-          <div class="result-value">{{ item.value }}</div>
-        </template>
-      </div>
-    </div>
-
-    <el-empty v-if="!results.length && !maskResults.length && !hostResults.length && !error" description="输入参数后点击计算" />
   </PageLayout>
 </template>
 
 <style scoped>
-.result-section { margin-bottom: 20px; max-width: 680px; }
-.section-title { font-size: 13px; font-weight: 600; color: var(--el-color-primary); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--el-border-color-lighter); }
-.result-grid { display: grid; grid-template-columns: 100px 1fr; gap: 6px 16px; }
-.result-label { font-size: 13px; color: var(--el-text-color-secondary); font-family: monospace; }
-.result-value { font-size: 13px; font-weight: 600; font-family: monospace; word-break: break-all; }
-.divider { grid-column: 1 / -1; height: 1px; background: var(--el-border-color-lighter); margin: 6px 0; }
-.result-header { grid-column: 1 / -1; font-size: 13px; font-weight: 600; color: var(--el-color-primary); }
-.extra { font-size: 11px; color: var(--el-text-color-secondary); margin-left: 8px; font-weight: 400; }
+.calc-body { max-width: 640px; }
+.ver-switch { margin-bottom: 20px; }
+.section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.section:last-child { border-bottom: none; }
+.input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.row-label { font-size: 13px; font-weight: 600; color: var(--el-text-color-secondary); white-space: nowrap; min-width: 70px; }
+.result-grid { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin-bottom: 10px; }
+.r-label { font-size: 13px; color: var(--el-text-color-secondary); font-family: monospace; }
+.r-value { font-size: 13px; font-weight: 600; font-family: monospace; word-break: break-all; }
+.split-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: monospace; margin-top: 8px; }
+.split-table th, .split-table td { padding: 4px 8px; border-bottom: 1px solid var(--el-border-color-lighter); text-align: left; }
+.split-table th { font-weight: 600; color: var(--el-text-color-secondary); font-size: 11px; }
 </style>
