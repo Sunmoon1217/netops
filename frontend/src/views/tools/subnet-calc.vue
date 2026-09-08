@@ -12,11 +12,7 @@ const maskResults = ref<any[]>([])
 const hostResults = ref<any[]>([])
 const error = ref('')
 
-// 实时计算
-watch([input, ipVer], () => { calculate() })
-watch(splitCount, () => { if (splitCount.value && splitCount.value > 1) calculate() })
-watch(maskInput, () => { calcMask() })
-watch(hostCount, () => { calcHosts() })
+
 
 function switchVer() {
   input.value = ipVer.value === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'
@@ -169,7 +165,7 @@ function bigIntToIPv6(n: bigint): string { const g: string[] = []; for (let i = 
 function ipv6Type(ip: string): string { const l = ip.toLowerCase(); if (l.startsWith('::1')) return '环回地址'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '唯一本地 (ULA)'; if (l.startsWith('ff')) return '组播地址'; if (l.startsWith('2001:db8')) return '文档地址'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; return '全局单播' }
 function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '::1') return '仅本机'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '站点本地 (ULA)'; if (l.startsWith('ff02::1')) return '所有节点'; if (l.startsWith('ff02::2')) return '所有路由器'; if (l.startsWith('ff')) return '组播'; if (l.startsWith('2001:db8')) return '文档示例'; if (l.startsWith('2001:')) return '全球单播'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; if (l.startsWith('64:ff9b')) return 'IPv4/IPv6 翻译'; if (l.startsWith('2002:')) return '6to4 隧道'; return '全球单播' }
 
-onMounted(calculate)
+onMounted(() => { calculate(); calcMask(); calcHosts() })
 </script>
 
 <template>
@@ -183,7 +179,8 @@ onMounted(calculate)
       <!-- CIDR 计算 + 结果 -->
       <div class="section">
         <div class="input-row">
-          <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" />
+          <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" @keyup.enter="calculate" />
+          <el-button type="primary" @click="calculate">计算</el-button>
           <span class="sep">|</span>
           <span class="row-label">拆分</span>
           <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" controls-position="right" style="width: 100px;" />
@@ -205,7 +202,8 @@ onMounted(calculate)
       <div v-if="ipVer === 'v4'" class="section">
         <div class="input-row">
           <span class="row-label">掩码转换</span>
-          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" style="width: 260px;" />
+          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" style="width: 260px;" @keyup.enter="calcMask" />
+          <el-button @click="calcMask">转换</el-button>
         </div>
         <div v-if="maskResults.length" class="result-grid">
           <template v-for="(item, idx) in maskResults" :key="'m'+idx">
@@ -219,7 +217,8 @@ onMounted(calculate)
       <div v-if="ipVer === 'v4'" class="section">
         <div class="input-row">
           <span class="row-label">主机数反算</span>
-          <el-input-number v-model="hostCount" :min="1" controls-position="right" style="width: 140px;" />
+          <el-input-number v-model="hostCount" :min="1" controls-position="right" style="width: 140px;" @keyup.enter="calcHosts" />
+          <el-button @click="calcHosts">推荐</el-button>
         </div>
         <div v-if="hostResults.length" class="result-grid">
           <template v-for="(item, idx) in hostResults" :key="'h'+idx">
