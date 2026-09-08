@@ -323,11 +323,18 @@ class DeviceConnectionViewSet(viewsets.ModelViewSet):
 
 
 class VlanViewSet(viewsets.ModelViewSet):
-    queryset = Vlan.objects.all()
+    queryset = Vlan.objects.select_related("device").all()
     serializer_class = VlanSerializer
     permission_classes = (AllowAny,)
-    search_fields = ("name", "vid")
+    search_fields = ("name", "vid", "device__hostname")
     ordering_fields = ("vid", "name")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        device_id = self.request.query_params.get("device")
+        if device_id:
+            qs = qs.filter(device_id=device_id)
+        return qs
 
 
 class VrfViewSet(viewsets.ModelViewSet):

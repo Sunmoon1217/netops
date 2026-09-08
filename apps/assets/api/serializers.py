@@ -158,9 +158,11 @@ class DeviceConnectionSerializer(serializers.ModelSerializer):
 
 
 class VlanSerializer(serializers.ModelSerializer):
+    device_hostname = serializers.CharField(source="device.hostname", read_only=True, default="")
+
     class Meta:
         model = Vlan
-        fields = ("id", "vid", "name", "description")
+        fields = ("id", "device", "device_hostname", "vid", "name", "description")
         read_only_fields = ("id",)
 
 

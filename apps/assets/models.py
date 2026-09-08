@@ -269,7 +269,8 @@ class ConfigBase(models.Model):
 class Vlan(models.Model):
     """VLAN"""
 
-    vid = models.PositiveIntegerField(unique=True, verbose_name="VLAN ID")
+    device = models.ForeignKey(Device, on_delete=models.CASCADE, related_name="vlans", null=True, blank=True, verbose_name="所属设备")
+    vid = models.PositiveIntegerField(verbose_name="VLAN ID")
     name = models.CharField(max_length=100, blank=True, default="", verbose_name="VLAN名称")
     description = models.CharField(max_length=255, blank=True, default="", verbose_name="描述")
 
@@ -277,9 +278,11 @@ class Vlan(models.Model):
         verbose_name = "VLAN"
         verbose_name_plural = verbose_name
         ordering = ("vid",)
+        constraints = (models.UniqueConstraint(fields=["device", "vid"], name="uni_vlan_device_vid"),)
 
     def __str__(self):
-        return f"VLAN {self.vid}" + (f" ({self.name})" if self.name else "")
+        prefix = f"{self.device.hostname} - " if self.device else ""
+        return f"{prefix}VLAN {self.vid}" + (f" ({self.name})" if self.name else "")
 
 
 class Vrf(ConfigBase):

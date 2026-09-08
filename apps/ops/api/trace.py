@@ -238,18 +238,34 @@ def route_list(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def dns_query(request):
-    """DNS 查询: GET /api/trace/dns-query/?domain=example.com&type=A"""
+    """DNS 查询: GET /api/trace/dns-query/?domain=&type=&server="""
     domain = request.query_params.get("domain", "").strip()
     record_type = request.query_params.get("type", "A").strip().upper()
+    dns_server = request.query_params.get("server", "").strip()
 
     if not domain:
         return Response({"error": "domain 参数必填"}, status=400)
 
-    import socket
-
     results = []
+
+    # 优先使用 dnspython（支持指定 DNS 服务器）
     try:
-        if record_type in ("A", "AAAA"):
+        import dns.resolver
+
+        resolver = dns.resolver.Resolver()
+        if dns_server:
+            resolver.nameservers = [dns_server]
+
+        answers = resolver.resolve(domain, record_type)
+        ttl = answers.rrset.ttl if hasattr(answers, 'rrset') else 0
+        for rdata in answers:
+            results.append({"type": record_type, "name": domain, "value": str(rdata), "ttl": str(ttl)})
+    except ImportError:
+        # dnspython 未安装，回退到 socket（仅 A/AAAA，不支持指定服务器）
+        if record_type not in ("A", "AAAA"):
+            return Response({"error": "dnspython 未安装，仅支持 A/AAAA 查询"}, status=501)
+        import socket
+        try:
             infos = socket.getaddrinfo(domain, None, socket.AF_INET if record_type == "A" else socket.AF_INET6)
             seen = set()
             for info in infos:
@@ -257,19 +273,9 @@ def dns_query(request):
                 if addr not in seen:
                     seen.add(addr)
                     results.append({"type": record_type, "name": domain, "value": addr, "ttl": "-"})
-        else:
-            try:
-                import dns.resolver
-                answers = dns.resolver.resolve(domain, record_type)
-                for rdata in answers:
-                    results.append({"type": record_type, "name": domain, "value": str(rdata), "ttl": str(answers.rrset.ttl)})
-            except ImportError:
-                return Response({"error": "dnspython 未安装，仅支持 A/AAAA 查询"}, status=501)
-            except Exception as e:
-                return Response({"error": f"DNS 查询失败: {e}"}, status=502)
-    except socket.gaierror as e:
-        return Response({"error": f"DNS 解析失败: {e}"}, status=502)
+        except socket.gaierror as e:
+            return Response({"error": f"DNS 解析失败: {e}"}, status=502)
     except Exception as e:
-        return Response({"error": str(e)}, status=500)
+        return Response({"error": str(e)}, status=502)
 
-    return Response({"domain": domain, "type": record_type, "records": results})
+    return Response({"domain": domain, "type": record_type, "server": dns_server or "系统默认", "records": results})
