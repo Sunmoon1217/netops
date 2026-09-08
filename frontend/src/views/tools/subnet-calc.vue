@@ -12,6 +12,12 @@ const maskResults = ref<any[]>([])
 const hostResults = ref<any[]>([])
 const error = ref('')
 
+// 实时计算
+watch([input, ipVer], () => { calculate() })
+watch(splitCount, () => { if (splitCount.value && splitCount.value > 1) calculate() })
+watch(maskInput, () => { calcMask() })
+watch(hostCount, () => { calcHosts() })
+
 function switchVer() {
   input.value = ipVer.value === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'
   results.value = []; splits.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
@@ -162,6 +168,8 @@ function ipv6ToBigInt(e: string): bigint { let r = 0n; for (const g of e.split('
 function bigIntToIPv6(n: bigint): string { const g: string[] = []; for (let i = 7; i >= 0; i--) g.push(((n >> BigInt(i * 16)) & 0xffffn).toString(16).padStart(4, '0')); return g.join(':') }
 function ipv6Type(ip: string): string { const l = ip.toLowerCase(); if (l.startsWith('::1')) return '环回地址'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '唯一本地 (ULA)'; if (l.startsWith('ff')) return '组播地址'; if (l.startsWith('2001:db8')) return '文档地址'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; return '全局单播' }
 function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '::1') return '仅本机'; if (l.startsWith('fe80')) return '链路本地'; if (l.startsWith('fc') || l.startsWith('fd')) return '站点本地 (ULA)'; if (l.startsWith('ff02::1')) return '所有节点'; if (l.startsWith('ff02::2')) return '所有路由器'; if (l.startsWith('ff')) return '组播'; if (l.startsWith('2001:db8')) return '文档示例'; if (l.startsWith('2001:')) return '全球单播'; if (l.startsWith('::ffff:')) return 'IPv4 映射'; if (l.startsWith('64:ff9b')) return 'IPv4/IPv6 翻译'; if (l.startsWith('2002:')) return '6to4 隧道'; return '全球单播' }
+
+onMounted(calculate)
 </script>
 
 <template>
@@ -175,9 +183,10 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
       <!-- CIDR 计算 + 结果 -->
       <div class="section">
         <div class="input-row">
-          <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" @keyup.enter="calculate" />
-          <el-button type="primary" @click="calculate">计算</el-button>
-          <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" placeholder="拆分数" controls-position="right" style="width: 110px;" />
+          <el-input v-model="input" :placeholder="ipVer === 'v4' ? '10.0.0.0/24' : '2001:db8::/32'" style="width: 260px;" />
+          <span class="sep">|</span>
+          <span class="row-label">拆分</span>
+          <el-input-number v-model="splitCount" :min="2" :max="ipVer === 'v4' ? 32 : 64" controls-position="right" style="width: 100px;" />
         </div>
         <el-alert v-if="error" type="error" :closable="false" style="margin-top: 8px;">{{ error }}</el-alert>
         <div v-if="results.length" class="result-grid">
@@ -188,9 +197,7 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
         </div>
         <table v-if="splits.length" class="split-table">
           <thead><tr><th>#</th><th>子网</th><th>范围</th><th>可用</th></tr></thead>
-          <tbody>
-            <tr v-for="(s, i) in splits" :key="i"><td>{{ i + 1 }}</td><td>{{ s.cidr }}</td><td>{{ s.range }}</td><td>{{ s.hosts }}</td></tr>
-          </tbody>
+          <tbody><tr v-for="(s, i) in splits" :key="i"><td>{{ i + 1 }}</td><td>{{ s.cidr }}</td><td>{{ s.range }}</td><td>{{ s.hosts }}</td></tr></tbody>
         </table>
       </div>
 
@@ -198,8 +205,7 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
       <div v-if="ipVer === 'v4'" class="section">
         <div class="input-row">
           <span class="row-label">掩码转换</span>
-          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" style="width: 260px;" @keyup.enter="calcMask" />
-          <el-button @click="calcMask">转换</el-button>
+          <el-input v-model="maskInput" placeholder="/24 或 255.255.255.0" style="width: 260px;" />
         </div>
         <div v-if="maskResults.length" class="result-grid">
           <template v-for="(item, idx) in maskResults" :key="'m'+idx">
@@ -213,8 +219,7 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
       <div v-if="ipVer === 'v4'" class="section">
         <div class="input-row">
           <span class="row-label">主机数反算</span>
-          <el-input-number v-model="hostCount" :min="1" placeholder="主机数" controls-position="right" style="width: 140px;" />
-          <el-button @click="calcHosts">推荐掩码</el-button>
+          <el-input-number v-model="hostCount" :min="1" controls-position="right" style="width: 140px;" />
         </div>
         <div v-if="hostResults.length" class="result-grid">
           <template v-for="(item, idx) in hostResults" :key="'h'+idx">
@@ -233,7 +238,8 @@ function ipv6Scope(ip: string): string { const l = ip.toLowerCase(); if (l === '
 .section { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--el-border-color-lighter); }
 .section:last-child { border-bottom: none; }
 .input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
-.row-label { font-size: 13px; font-weight: 600; color: var(--el-text-color-secondary); white-space: nowrap; min-width: 70px; }
+.sep { color: var(--el-border-color); font-size: 18px; }
+.row-label { font-size: 13px; font-weight: 600; color: var(--el-text-color-secondary); white-space: nowrap; }
 .result-grid { display: grid; grid-template-columns: 90px 1fr; gap: 4px 12px; margin-bottom: 10px; }
 .r-label { font-size: 13px; color: var(--el-text-color-secondary); font-family: monospace; }
 .r-value { font-size: 13px; font-weight: 600; font-family: monospace; word-break: break-all; }
