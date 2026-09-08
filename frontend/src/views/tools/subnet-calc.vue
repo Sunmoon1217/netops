@@ -239,6 +239,7 @@ function ipv6Type(ip: string): string {
 }
 
 function resetResults() {
+  input.value = ipVer.value === "v4" ? "10.0.0.0/24" : "2001:db8::/32"
   results.value = []; maskResults.value = []; hostResults.value = []; error.value = ''
 }
 
