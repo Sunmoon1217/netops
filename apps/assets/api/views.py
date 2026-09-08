@@ -3,6 +3,7 @@ from pathlib import Path
 
 from django.http import JsonResponse
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -1058,6 +1059,93 @@ class TopologyViewSet(viewsets.ModelViewSet):
     permission_classes = (AllowAny,)
     search_fields = ("name", "description")
     ordering_fields = ("name", "updated_at")
+
+    @action(detail=False, methods=["post"])
+    def build_from_links(self, request):
+        """从邻居关系列表自动构建拓扑图
+
+        POST /api/assets/topologies/build_from-links/
+        Body: {
+            "name": "拓扑名",
+            "links": [
+                {"src_device": "hostname1", "src_intf": "GE1/0/1", "dst_device": "hostname2", "dst_intf": "GE1/0/2"},
+                ...
+            ]
+        }
+        """
+        from assets.models import Device
+
+        name = request.data.get("name", "")
+        links = request.data.get("links", [])
+        if not name:
+            return Response({"error": "name 必填"}, status=400)
+        if not links:
+            return Response({"error": "links 必填"}, status=400)
+
+        # 收集所有设备名
+        device_names = set()
+        for link in links:
+            device_names.add(link.get("src_device", ""))
+            device_names.add(link.get("dst_device", ""))
+        device_names.discard("")
+
+        # 批量查找设备
+        devices = Device.objects.filter(hostname__in=device_names)
+        device_map = {d.hostname: d for d in devices}
+
+        # 检查缺失设备
+        missing = device_names - set(device_map.keys())
+        if missing:
+            return Response({"error": f"未找到设备: {', '.join(missing)}"}, status=404)
+
+        # 构建 G6 graph_data
+        nodes = []
+        node_ids = set()
+        for hostname, device in device_map.items():
+            node_id = f"device-{device.pk}"
+            if node_id not in node_ids:
+                nodes.append({
+                    "id": node_id,
+                    "label": hostname,
+                    "data": {"device_type": device.device_type, "device_id": device.pk},
+                })
+                node_ids.add(node_id)
+
+        edges = []
+        for i, link in enumerate(links):
+            src = device_map.get(link["src_device"])
+            dst = device_map.get(link["dst_device"])
+            if not src or not dst:
+                continue
+            edge_id = f"edge-{i}"
+            src_intf = link.get("src_intf", "")
+            dst_intf = link.get("dst_intf", "")
+            edges.append({
+                "id": edge_id,
+                "source": f"device-{src.pk}",
+                "target": f"device-{dst.pk}",
+                "data": {
+                    "edge_type": "physical",
+                    "sourceInterface": src_intf,
+                    "targetInterface": dst_intf,
+                    "label": f"{src_intf} ↔ {dst_intf}" if src_intf and dst_intf else "",
+                },
+            })
+
+        # 创建或更新拓扑
+        topology = Topology.objects.create(
+            name=name,
+            description=f"从 LLDP/CDP 邻居关系自动构建 ({len(nodes)} 台设备, {len(edges)} 条链路)",
+            graph_data={"nodes": nodes, "edges": edges},
+        )
+
+        return Response({
+            "id": topology.pk,
+            "name": topology.name,
+            "device_count": len(nodes),
+            "link_count": len(edges),
+            "missing_devices": list(missing),
+        })
 
 
 class ArpMacViewSet(viewsets.ModelViewSet):

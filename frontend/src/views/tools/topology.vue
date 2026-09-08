@@ -6,6 +6,7 @@ import TopologyToolbar from '@/ui/topology/TopologyToolbar.vue'
 import DeviceSelector from '@/ui/topology/DeviceSelector.vue'
 import TopologyNodePanel from '@/ui/topology/TopologyNodePanel.vue'
 import TopologyEdgePanel from '@/ui/topology/TopologyEdgePanel.vue'
+import api from '@/api/index'
 import { getTopology, getTopologies, createTopology, updateTopology, deleteTopology } from '@/api/topology'
 import { buildIconDataUri } from '@/ui/topology/device-icons'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -16,6 +17,10 @@ const route = useRoute()
 const topologyList = ref<any[]>([])
 const topologyId = ref<number | null>(null)
 const editing = ref(false)
+const showAutoBuild = ref(false)
+const autoBuildName = ref('')
+const autoBuildLinks = ref('')
+const autoBuilding = ref(false)
 
 // === 图状态 ===
 const showDeviceSelector = ref(false)
@@ -146,6 +151,38 @@ function handleAddDevice(device: any) {
     data: { device_type: device.device_type, device_id: device.id },
     style: { iconSrc, iconWidth: 32, iconHeight: 32 },
   })
+}
+
+async function handleAutoBuild() {
+  if (!autoBuildName.value.trim()) { ElMessage.warning('请输入拓扑名称'); return }
+  if (!autoBuildLinks.value.trim()) { ElMessage.warning('请输入链路数据'); return }
+
+  let links
+  try {
+    links = JSON.parse(autoBuildLinks.value)
+    if (!Array.isArray(links)) { ElMessage.error('链路数据应为 JSON 数组'); return }
+  } catch {
+    ElMessage.error('JSON 格式错误'); return
+  }
+
+  autoBuilding.value = true
+  try {
+    const resp = await api.post('/api/assets/topologies/build_from_links/', {
+      name: autoBuildName.value.trim(),
+      links,
+    })
+    ElMessage.success(`构建完成：${resp.data.device_count} 台设备，${resp.data.link_count} 条链路`)
+    showAutoBuild.value = false
+    autoBuildName.value = ''
+    autoBuildLinks.value = ''
+    await loadTopologyList()
+    topologyId.value = resp.data.id
+    await loadTopologyData(resp.data.id)
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.error || '构建失败')
+  } finally {
+    autoBuilding.value = false
+  }
 }
 
 function handleAddCustom() {
@@ -299,6 +336,7 @@ onMounted(async () => {
         <el-button type="primary" plain @click="handleCreateTopology">
           <el-icon><Plus /></el-icon>新建
         </el-button>
+        <el-button @click="showAutoBuild = true">自动构建</el-button>
         <el-button
           v-if="topologyId"
           type="danger"
@@ -388,6 +426,26 @@ onMounted(async () => {
       @update:visible="showDeviceSelector = $event"
     />
   </div>
+
+  <!-- 自动构建弹窗 -->
+  <el-dialog v-model="showAutoBuild" title="自动构建拓扑（LLDP/CDP）" width="580px">
+    <el-form label-width="90px">
+      <el-form-item label="拓扑名称">
+        <el-input v-model="autoBuildName" placeholder="如：生产网络拓扑" />
+      </el-form-item>
+      <el-form-item label="链路数据">
+        <el-input v-model="autoBuildLinks" type="textarea" :rows="10" placeholder='JSON 数组，每条链路格式：
+[
+  {"src_device": "设备A", "src_intf": "GE1/0/1", "dst_device": "设备B", "dst_intf": "GE1/0/2"},
+  {"src_device": "设备B", "src_intf": "GE1/0/3", "dst_device": "设备C", "dst_intf": "GE1/0/1"}
+]' />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showAutoBuild = false">取消</el-button>
+      <el-button type="primary" :loading="autoBuilding" @click="handleAutoBuild">构建</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts">
